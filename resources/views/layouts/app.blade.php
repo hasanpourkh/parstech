@@ -29,6 +29,7 @@
     </style>
 </head>
 <body>
+    @include('layouts.header')
     @include('layouts.sidebar')
     <div class="main-content" id="main-content">
         @yield('content')

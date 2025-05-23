@@ -1,3 +1,4 @@
+
 <aside class="main-sidebar sidebar-dark-primary elevation-4" style="overflow:hidden;">
     <!-- برند و لوگو -->
     <a href="{{ url('/') }}" class="brand-link">
@@ -361,6 +362,7 @@
         background: #222d32;
     }
 </style>
+<script src="{{ asset('js/sidebar.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const toggle = document.getElementById('userMenuToggle');

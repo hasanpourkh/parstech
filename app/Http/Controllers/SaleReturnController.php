@@ -9,12 +9,12 @@ use App\Models\Product;
 use Carbon\Carbon;
 use DB;
 
-class ReturnController extends Controller
+class SaleReturnController extends Controller
 {
     public function create()
     {
         // 10 فروش آخر و شماره مرجوعی بعدی
-        $lastSales = Sale::orderBy('date', 'desc')->limit(10)->get();
+        $lastSales = Sale::orderBy('created_at', 'desc')->limit(10)->get();
         $nextReturnNumber = 'RET' . str_pad(SaleReturn::max('id') + 1, 5, '0', STR_PAD_LEFT);
 
         return view('sales.returns.create', compact('lastSales', 'nextReturnNumber'));

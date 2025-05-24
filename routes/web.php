@@ -116,31 +116,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/quick', [SaleController::class, 'quickForm'])->name('quick');
         Route::post('/quick/store', [SaleController::class, 'quickStore'])->name('quick.store');
     });
-    Route::get('/returns/create', [ReturnController::class, 'create'])->name('returns.create');
-    Route::post('/returns/store', [ReturnController::class, 'store'])->name('returns.store');
-// API برای دریافت اطلاعات یک فروش
-Route::get('/api/sales/{sale}', function($saleId) {
-    $sale = \App\Models\Sale::with(['buyer', 'seller', 'items.product', 'items.service'])->findOrFail($saleId);
+    Route::get('/returns/create', [SaleReturnController::class, 'create'])->name('returns.create');
+    Route::post('/returns/store', [SaleReturnController::class, 'store'])->name('returns.store');
+        // API برای دریافت اطلاعات یک فروش
+        Route::get('/api/sales/{sale}', function($saleId) {
+            $sale = \App\Models\Sale::with(['buyer', 'seller', 'items.product', 'items.service'])->findOrFail($saleId);
 
-    return [
-        'id' => $sale->id,
-        'invoice_number' => $sale->invoice_number,
-        'date' => $sale->date,
-        'date_jalali' => jdate($sale->date)->format('Y/m/d'),
-        'buyer_name' => $sale->buyer ? $sale->buyer->name : '-',
-        'seller_name' => $sale->seller ? $sale->seller->name : '-',
-        'total_amount' => $sale->total_amount,
-        'items' => $sale->items->map(function($item){
             return [
-                'id' => $item->id,
-                'name' => $item->product ? $item->product->name : ($item->service ? $item->service->name : '-'),
-                'qty' => $item->qty,
-                'unit_price' => $item->unit_price,
-                'total' => $item->qty * $item->unit_price,
+                'id' => $sale->id,
+                'invoice_number' => $sale->invoice_number,
+                // ستون تاریخ را با ستون موجود در دیتابیس خود جایگزین کن (مثلاً created_at)
+                'date' => $sale->created_at, // اگر ستون دیگری داری نامش را جایگزین کن
+                'date_jalali' => jdate($sale->created_at)->format('Y/m/d'), // همینطور
+                'buyer_name' => $sale->buyer ? $sale->buyer->name : '-',
+                'seller_name' => $sale->seller ? $sale->seller->name : '-',
+                'total_amount' => $sale->total_amount,
+                'items' => $sale->items->map(function($item){
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->product ? $item->product->name : ($item->service ? $item->service->name : '-'),
+                        'qty' => $item->qty,
+                        'unit_price' => $item->unit_price,
+                        'total' => $item->qty * $item->unit_price,
+                    ];
+                }),
             ];
-        }),
-    ];
-});
+        });
+
     // Accounting
     Route::prefix('accounting')->name('accounting.')->group(function () {
         Route::get('/journal', [AccountingController::class, 'journal'])->name('journal');

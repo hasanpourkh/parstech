@@ -13,7 +13,6 @@ class SaleReturnController extends Controller
 {
     public function create()
     {
-        // 10 فروش آخر و شماره مرجوعی بعدی
         $lastSales = Sale::orderBy('created_at', 'desc')->limit(10)->get();
         $nextReturnNumber = 'RET' . str_pad(SaleReturn::max('id') + 1, 5, '0', STR_PAD_LEFT);
 
@@ -27,49 +26,50 @@ class SaleReturnController extends Controller
             'sale_id' => 'required|exists:sales,id',
             'reason' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'items' => 'required|array|min:1',
+            'items_data' => 'required|string',
         ]);
 
-        DB::transaction(function() use ($request) {
-            $sale = Sale::findOrFail($request->sale_id);
+        $itemIds = json_decode($request->items_data, true);
 
-            $return = SaleReturn::create([
+        DB::transaction(function() use ($request, $itemIds) {
+            $sale = \App\Models\Sale::findOrFail($request->sale_id);
+
+            $return = \App\Models\SaleReturn::create([
                 'return_number' => $request->return_number,
                 'sale_id' => $sale->id,
                 'reason' => $request->reason,
                 'description' => $request->description,
                 'user_id' => auth()->id(),
-                'returned_at' => Carbon::now(),
+                'returned_at' => \Carbon\Carbon::now(),
             ]);
 
-            foreach($request->items as $item) {
-                if(empty($item['selected']) || empty($item['qty']) || $item['qty'] <= 0) continue;
-
-                $saleItem = $sale->items()->find($item['id']);
+            foreach($itemIds as $item_id) {
+                $saleItem = $sale->items()->find($item_id);
                 if(!$saleItem) continue;
 
-                $qty = min(intval($item['qty']), $saleItem->qty);
+                $qty = $saleItem->quantity; // کل تعداد آیتم را مرجوع می‌کند
 
-                // ثبت مرجوعی برای آیتم
                 $return->items()->create([
                     'sale_item_id' => $saleItem->id,
                     'qty' => $qty,
-                    'reason' => $item['reason'] ?? null,
+                    'reason' => null,
                 ]);
-
-                // افزایش موجودی محصول (در صورت محصول بودن)
+                // موجودی محصول را برگرداند
                 if($saleItem->product_id) {
-                    $product = Product::find($saleItem->product_id);
+                    $product = \App\Models\Product::find($saleItem->product_id);
                     if($product) {
                         $product->increment('stock', $qty);
                     }
                 }
-
-                // کم کردن از فروش اصلی
-                $saleItem->decrement('qty', $qty);
+                $saleItem->decrement('quantity', $qty);
             }
         });
 
         return redirect()->route('returns.create')->with('success', 'مرجوعی با موفقیت ثبت شد.');
+    }
+    public function index()
+    {
+        $returns = SaleReturn::latest()->paginate(15);
+        return view('sales.returns.index', compact('returns'));
     }
 }

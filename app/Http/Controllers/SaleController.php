@@ -612,4 +612,65 @@ class SaleController extends Controller
 
         return 'invoices-' . $number;
     }
+    public function quickForm()
+{
+    $sellers = Seller::all();
+    $products = Product::with('category')->where('type', 'product')->get();
+    $services = Product::with('category')->where('type', 'service')->get();
+    $currencies = Currency::all();
+
+    // شماره پیشنهادی برای فاکتور جدید
+    $nextNumber = $this->generateNextInvoiceNumber();
+
+    return view('sales.quick', compact(
+        'sellers',
+        'products',
+        'services',
+        'currencies',
+        'nextNumber'
+    ));
+}
+public function ajaxSearch(Request $request)
+{
+    $q = $request->input('q', '');
+    $sales = \App\Models\Sale::where('invoice_number', 'like', "%$q%")
+        ->orWhereHas('buyer', function($query) use ($q) {
+            $query->where('name', 'like', "%$q%");
+        })
+        ->latest()
+        ->limit(20)
+        ->get();
+
+    $data = $sales->map(function($sale) {
+        return [
+            'id' => $sale->id,
+            'invoice_number' => $sale->invoice_number,
+            'buyer' => optional($sale->buyer)->name ?? '-',
+            'final_amount' => $sale->final_amount,
+            'date' => jdate($sale->created_at)->format('Y/m/d'),
+        ];
+    });
+
+    return response()->json($data);
+}
+public function ajaxShow(\App\Models\Sale $sale)
+{
+    $sale->load('items.product', 'buyer');
+    return response()->json([
+        'id' => $sale->id,
+        'invoice_number' => $sale->invoice_number,
+        'buyer' => optional($sale->buyer)->name ?? '-',
+        'final_amount' => $sale->final_amount,
+        'created_at' => jdate($sale->created_at)->format('Y/m/d'),
+        'items' => $sale->items->map(function($item){
+            return [
+                'id' => $item->id,
+                'name' => $item->product ? $item->product->name : '',
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'total' => $item->total,
+            ];
+        }),
+    ]);
+}
 }

@@ -28,7 +28,7 @@ use App\Http\Controllers\ShareholderController;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use App\Http\Controllers\SaleController;
-
+use App\Http\Controllers\SaleReturnController;
 use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\ServiceApiController;
@@ -116,6 +116,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/quick', [SaleController::class, 'quickForm'])->name('quick');
         Route::post('/quick/store', [SaleController::class, 'quickStore'])->name('quick.store');
     });
+    Route::get('/api/invoices/search', [\App\Http\Controllers\SaleController::class, 'ajaxSearch'])->name('invoices.ajax_search');
+
+    Route::get('/api/invoices/{sale}', [\App\Http\Controllers\SaleController::class, 'ajaxShow'])->name('invoices.ajax_show');
+
+    Route::get('/api/sales/search', [\App\Http\Controllers\SaleController::class, 'ajaxSearch'])->name('sales.ajax_search');
+    Route::get('/api/sales/{sale}', [\App\Http\Controllers\SaleController::class, 'ajaxShow'])->name('sales.ajax_show');
+
     Route::get('/returns/create', [SaleReturnController::class, 'create'])->name('returns.create');
     Route::post('/returns/store', [SaleReturnController::class, 'store'])->name('returns.store');
         // API برای دریافت اطلاعات یک فروش
@@ -171,6 +178,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users', [SettingsController::class, 'users'])->name('users');
     });
     Route::post('/services/save-form', [\App\Http\Controllers\ServiceController::class, 'saveForm']);
+    Route::get('/sales/quick', [SaleController::class, 'quickForm'])->name('sales.quick'); // فروش سریع
 
     // Products and Categories
     Route::resource('products', ProductController::class);

@@ -7,40 +7,13 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-
-    public function list()
-    {
-        $cats = Category::select('id', 'name')->get();
-        return response()->json($cats);
-    }
-    // لیست دسته‌بندی‌ها با زیرمجموعه‌ها (لیستی)
+    // لیست دسته‌بندی‌ها با زیر دسته‌ها
     public function index()
     {
-        // همه دسته‌ها با زیر دسته‌ها
-        $categories = \App\Models\Category::with('children')->whereNull('parent_id')->get();
-        // تبدیل به ساختار مناسب tabulator
-        $tree = $this->buildCategoryTree($categories);
-        return view('categories.index', compact('tree'));
+        $categories = Category::with('children')->whereNull('parent_id')->orderBy('name')->get();
+        return view('categories.index', compact('categories'));
     }
 
-    private function buildCategoryTree($categories)
-    {
-        $out = [];
-        foreach ($categories as $cat) {
-            $item = [
-                "id" => $cat->id,
-                "name" => $cat->name,
-                "type" => $cat->category_type,
-                "created_at" => $cat->created_at ? $cat->created_at->format('Y-m-d') : '',
-            ];
-            if ($cat->children && $cat->children->count()) {
-                $item["_children"] = $this->buildCategoryTree($cat->children);
-            }
-            $out[] = $item;
-        }
-        return $out;
-    }
-    // فرم ایجاد (همان قبلی)
     public function create()
     {
         $personCategories = Category::where('category_type', 'person')->get();
@@ -56,17 +29,7 @@ class CategoryController extends Controller
             'nextPersonCode', 'nextProductCode', 'nextServiceCode'
         ));
     }
-    public function personSearch(Request $request)
-    {
-        $query = $request->input('q');
-        $categories = \App\Models\Category::whereIn('category_type', ['اشخاص', 'person'])
-            ->where('name', 'like', "%$query%")
-            ->limit(20)
-            ->get(['id', 'name']);
-        return response()->json($categories->map(function($cat){
-            return ['id' => $cat->id, 'text' => $cat->name];
-        }));
-    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -78,10 +41,6 @@ class CategoryController extends Controller
             'image' => 'nullable|image|max:2048'
         ]);
 
-        // حذف خطوط مربوط به تاریخ:
-        // $date = \Morilog\Jalali\Jalalian::fromFormat('Y/m/d', $request->date)->toCarbon();
-        // $dueDate = \Morilog\Jalali\Jalalian::fromFormat('Y/m/d', $request->dueDate)->toCarbon();
-
         $data = $request->only(['name', 'code', 'category_type', 'parent_id', 'description']);
         if (empty($data['code'])) {
             $prefix = [
@@ -89,18 +48,18 @@ class CategoryController extends Controller
                 'product' => 'pro',
                 'service' => 'ser',
             ];
-            $count = Category::where('category_type', $request->category_type)->count() + 1001;
-            $data['code'] = $prefix[$request->category_type] . $count;
+            $count = Category::where('category_type', $data['category_type'])->count() + 1001;
+            $data['code'] = $prefix[$data['category_type']] . $count;
         }
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('categories', 'public');
         }
         Category::create($data);
 
-        return redirect()->route('categories.index')->with('success', 'دسته‌بندی جدید با موفقیت ایجاد شد.');
+        return redirect()->route('categories.index')
+            ->with('success', 'دسته‌بندی با موفقیت ثبت شد.');
     }
 
-    // فرم ویرایش
     public function edit($id)
     {
         $category = Category::findOrFail($id);
@@ -110,10 +69,10 @@ class CategoryController extends Controller
         return view('categories.edit', compact('category', 'categories'));
     }
 
-    // ذخیره ویرایش
     public function update(Request $request, $id)
     {
         $category = Category::findOrFail($id);
+
         $request->validate([
             'name' => 'required|string|max:191',
             'code' => 'nullable|string|max:100',
@@ -121,30 +80,25 @@ class CategoryController extends Controller
             'description' => 'nullable|string|max:1000',
             'image' => 'nullable|image|max:2048'
         ]);
+
         $data = $request->only(['name', 'code', 'parent_id', 'description']);
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('categories', 'public');
         }
         $category->update($data);
 
-        return redirect()->route('categories.index')->with('success', 'دسته‌بندی با موفقیت ویرایش شد.');
+        return redirect()->route('categories.index')
+            ->with('success', 'دسته‌بندی با موفقیت بروزرسانی شد.');
     }
 
-    // حذف
     public function destroy($id)
     {
         $category = Category::findOrFail($id);
-        // اگر زیر دسته دارد، ابتدا همه زیر دسته‌ها را حذف یا parent_id را null کن یا ... (بستگی به نیاز)
         foreach ($category->children as $child) {
             $child->delete();
         }
         $category->delete();
-        return redirect()->route('categories.index')->with('success', 'دسته‌بندی با موفقیت حذف شد.');
-    }
-
-    public function apiList()
-    {
-        $categories = \App\Models\Category::orderBy('name')->get(['id', 'name', 'code', 'category_type', 'parent_id']);
-        return response()->json($categories);
+        return redirect()->route('categories.index')
+            ->with('success', 'دسته‌بندی با موفقیت حذف شد.');
     }
 }

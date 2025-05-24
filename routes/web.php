@@ -116,7 +116,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/quick', [SaleController::class, 'quickForm'])->name('quick');
         Route::post('/quick/store', [SaleController::class, 'quickStore'])->name('quick.store');
     });
+    Route::get('/returns/create', [ReturnController::class, 'create'])->name('returns.create');
+    Route::post('/returns/store', [ReturnController::class, 'store'])->name('returns.store');
+// API برای دریافت اطلاعات یک فروش
+Route::get('/api/sales/{sale}', function($saleId) {
+    $sale = \App\Models\Sale::with(['buyer', 'seller', 'items.product', 'items.service'])->findOrFail($saleId);
 
+    return [
+        'id' => $sale->id,
+        'invoice_number' => $sale->invoice_number,
+        'date' => $sale->date,
+        'date_jalali' => jdate($sale->date)->format('Y/m/d'),
+        'buyer_name' => $sale->buyer ? $sale->buyer->name : '-',
+        'seller_name' => $sale->seller ? $sale->seller->name : '-',
+        'total_amount' => $sale->total_amount,
+        'items' => $sale->items->map(function($item){
+            return [
+                'id' => $item->id,
+                'name' => $item->product ? $item->product->name : ($item->service ? $item->service->name : '-'),
+                'qty' => $item->qty,
+                'unit_price' => $item->unit_price,
+                'total' => $item->qty * $item->unit_price,
+            ];
+        }),
+    ];
+});
     // Accounting
     Route::prefix('accounting')->name('accounting.')->group(function () {
         Route::get('/journal', [AccountingController::class, 'journal'])->name('journal');
@@ -151,6 +175,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/products/upload', [ProductController::class, 'upload'])->name('products.upload');
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::get('categories/list', [CategoryController::class, 'apiList']);
+    Route::resource('categories', CategoryController::class);
 
     Route::get('/services/formbuilder', function () {
         return view('services.formbuilder');

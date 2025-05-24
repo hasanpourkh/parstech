@@ -6,25 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class SaleItem extends Model
 {
-    protected $fillable = [
-        'sale_id',
-        'product_id',
-        'description',
-        'unit',
-        'quantity',
-        'unit_price',
-        'discount',
-        'tax',
-        'total',
-    ];
-
-    public function sale()
-    {
-        return $this->belongsTo(Sale::class);
-    }
+    protected $fillable = ['sale_id', 'product_id', 'service_id', 'qty', 'unit_price'];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
     }
 }

@@ -16,11 +16,30 @@ class CategoryController extends Controller
     // لیست دسته‌بندی‌ها با زیرمجموعه‌ها (لیستی)
     public function index()
     {
-        // فقط دسته‌های والد (بدون والد) و با eager load زیر دسته‌ها
-        $categories = \App\Models\Category::with('children')->whereNull('parent_id')->orderBy('category_type')->orderBy('name')->get();
-        return view('categories.index', compact('categories'));
+        // همه دسته‌ها با زیر دسته‌ها
+        $categories = \App\Models\Category::with('children')->whereNull('parent_id')->get();
+        // تبدیل به ساختار مناسب tabulator
+        $tree = $this->buildCategoryTree($categories);
+        return view('categories.index', compact('tree'));
     }
 
+    private function buildCategoryTree($categories)
+    {
+        $out = [];
+        foreach ($categories as $cat) {
+            $item = [
+                "id" => $cat->id,
+                "name" => $cat->name,
+                "type" => $cat->category_type,
+                "created_at" => $cat->created_at ? $cat->created_at->format('Y-m-d') : '',
+            ];
+            if ($cat->children && $cat->children->count()) {
+                $item["_children"] = $this->buildCategoryTree($cat->children);
+            }
+            $out[] = $item;
+        }
+        return $out;
+    }
     // فرم ایجاد (همان قبلی)
     public function create()
     {

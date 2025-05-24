@@ -362,7 +362,7 @@
         background: #222d32;
     }
 </style>
-<script src="{{ asset('js/sidebar.js') }}"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const toggle = document.getElementById('userMenuToggle');
@@ -378,19 +378,6 @@
                 }
             });
         }
-        // باز و بسته شدن منوهای سایدبار
-        const sidebarMenu = document.getElementById("sidebar-menu");
-        if(sidebarMenu){
-            sidebarMenu.querySelectorAll('.has-treeview > a').forEach(function(menuLink){
-                menuLink.addEventListener('click', function(e){
-                    e.preventDefault();
-                    const parentLi = menuLink.parentElement;
-                    sidebarMenu.querySelectorAll('.has-treeview.menu-open').forEach(function(openLi){
-                        if(openLi !== parentLi) openLi.classList.remove('menu-open');
-                    });
-                    parentLi.classList.toggle('menu-open');
-                });
-            });
-        }
+
     });
 </script>

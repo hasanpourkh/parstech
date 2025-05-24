@@ -87,11 +87,9 @@
     <!-- Persian DateTimePicker (فایل js را دانلود کن و در public/js قرار بده) -->
     <script src="{{ asset('js/mds.bs.datetimepicker.js') }}"></script>
     <script src="{{ asset('js/currency-modal.js') }}"></script>
-    <script src="{{ asset('js/sidebar-custom.js') }}"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
     @yield('scripts')
     @stack('scripts')
     @livewireScripts

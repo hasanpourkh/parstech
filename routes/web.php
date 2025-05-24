@@ -34,10 +34,14 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\ServiceApiController;
 
 use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\BackupController;
 
 
-
-
+Route::middleware(['auth'])->group(function() {
+    Route::get('/backup', [BackupController::class, 'index'])->name('backup.index');
+    Route::post('/backup/export', [BackupController::class, 'export'])->name('backup.export');
+    Route::get('/backup/all', [BackupController::class, 'backupAll'])->name('backup.all');
+});
 
 
 Route::get('shareholders/{id}', [ShareholderController::class, 'show'])->name('shareholders.show');

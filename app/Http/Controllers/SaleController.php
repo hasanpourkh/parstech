@@ -633,7 +633,7 @@ class SaleController extends Controller
 public function ajaxSearch(Request $request)
 {
     $q = $request->input('q', '');
-    $sales = \App\Models\Sale::where('invoice_number', 'like', "%$q%")
+    $sales = Sale::where('invoice_number', 'like', "%$q%")
         ->orWhereHas('buyer', function($query) use ($q) {
             $query->where('name', 'like', "%$q%");
         })
@@ -653,7 +653,7 @@ public function ajaxSearch(Request $request)
 
     return response()->json($data);
 }
-public function ajaxShow(\App\Models\Sale $sale)
+public function ajaxShow(Sale $sale)
 {
     $sale->load('items.product', 'buyer');
     return response()->json([

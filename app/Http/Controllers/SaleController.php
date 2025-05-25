@@ -653,13 +653,14 @@ public function ajaxSearch(Request $request)
 
     return response()->json($data);
 }
-public function ajaxShow(Sale $sale)
+public function ajaxShow(\App\Models\Sale $sale)
 {
-    $sale->load('items.product', 'buyer');
+    $sale->load('items.product', 'buyer', 'seller');
     return response()->json([
         'id' => $sale->id,
         'invoice_number' => $sale->invoice_number,
         'buyer' => optional($sale->buyer)->name ?? '-',
+        'seller' => optional($sale->seller)->first_name . ' ' . optional($sale->seller)->last_name,
         'final_amount' => $sale->final_amount,
         'created_at' => jdate($sale->created_at)->format('Y/m/d'),
         'items' => $sale->items->map(function($item){

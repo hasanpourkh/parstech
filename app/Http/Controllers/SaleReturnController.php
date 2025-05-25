@@ -12,6 +12,11 @@ use DB;
 
 class SaleReturnController extends Controller
 {
+    public function index()
+    {
+        $returns = SaleReturn::with('sale')->orderBy('created_at', 'desc')->paginate(20);
+        return view('sales.returns.index', compact('returns'));
+    }
     public function create()
     {
         $nextReturnNumber = 'RET' . str_pad(SaleReturn::max('id') + 1, 5, '0', STR_PAD_LEFT);

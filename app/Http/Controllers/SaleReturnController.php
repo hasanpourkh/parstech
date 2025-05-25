@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Person;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnItem;
 use App\Models\Sale;

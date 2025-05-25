@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\ServiceApiController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\BackupController;
 
+Route::get('/api/sales/latest', [\App\Http\Controllers\SaleAjaxController::class, 'latest'])->name('sales.ajax.latest');
 
 Route::middleware(['auth'])->group(function() {
     Route::get('/backup', [BackupController::class, 'index'])->name('backup.index');

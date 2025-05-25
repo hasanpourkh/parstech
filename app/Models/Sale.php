@@ -81,6 +81,7 @@ class Sale extends Model
         'cheque_amount' => 'integer'
     ];
 
+    
     protected $appends = ['formatted_date', 'payment_status'];
 
     public function seller()
@@ -100,7 +101,7 @@ class Sale extends Model
 
     public function items()
     {
-        return $this->hasMany(SaleItem::class);
+        return $this->hasMany(SaleItem::class, 'sale_id');
     }
 
     public function getFormattedDateAttribute()

@@ -15,16 +15,15 @@ class SaleReturnController extends Controller
     public function index()
     {
         // ارتباط customer و person را eager load کن تا کند نشه
-        $returns = ReturnInvoice::with(['customer.person'])->get();
+        $returns = SaleReturn::with(['sale.customer.person'])->paginate(15);
 
-        return view('returns.index', compact('returns'));
+        // مسیر ویو صحیح رو بنویس! اگر در resources/views/sales/returns/index.blade.php هست:
+        return view('sales.returns.index', compact('returns'));
+        // اگر در مسیر دیگری هست، همون رو بنویس.
     }
     public function create()
     {
-        // این خط درست شد: مقداردهی شماره مرجوعی
         $nextReturnNumber = 'RET' . str_pad(SaleReturn::max('id') + 1, 5, '0', STR_PAD_LEFT);
-
-        // فاکتورهای فروش رو با مشتری و شخص لود کن
         $sales = Sale::with(['customer.person', 'seller'])->orderBy('created_at', 'desc')->get();
 
         return view('sales.returns.create', compact('sales', 'nextReturnNumber'));

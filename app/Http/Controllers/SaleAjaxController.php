@@ -46,9 +46,9 @@ class SaleAjaxController extends Controller
             return [
                 'id' => $sale->id,
                 'invoice_number' => $sale->invoice_number,
-                'created_at' => jdate($sale->created_at)->format('Y/m/d'),
-                'buyer' => optional($sale->buyer)->name ?? '-',
-                'seller' => optional($sale->seller)->first_name . ' ' . optional($sale->seller)->last_name,
+                'created_at' => jdate($sale->created_at)->format('Y/m/d H:i'),
+                'buyer' => optional($sale->buyer)->name ?? 'نامشخص',
+                'seller' => trim(optional($sale->seller)->first_name . ' ' . optional($sale->seller)->last_name),
                 'final_amount' => number_format($sale->final_amount),
             ];
         });

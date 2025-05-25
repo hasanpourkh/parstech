@@ -81,7 +81,7 @@ class Sale extends Model
         'cheque_amount' => 'integer'
     ];
 
-    
+
     protected $appends = ['formatted_date', 'payment_status'];
 
     public function seller()

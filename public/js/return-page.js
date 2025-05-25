@@ -1,5 +1,14 @@
+
+document.addEventListener('DOMContentLoaded', function () {
 function toPersianDigits(str) {
     return (str + '').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+
+
+
+function toPersianDigits(num) {
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    return String(num).replace(/\d/g, (d) => persianDigits[d]);
 }
 
 function renderItemsTable(items) {
@@ -100,10 +109,10 @@ window.showBarcodeField = function(itemId, itemName) {
     }
 }
 
-window.generateBarcode = function(itemId, itemName) {
-    let barcode = 'RET-' + itemName.replace(/\s+/g, '-').toUpperCase() + '-' + itemId + '-' + Math.floor(Math.random()*9000+1000);
+window.generateBarcode = function (itemId, itemName) {
+    let barcode = 'RET-' + itemName.replace(/\s+/g, '-').toUpperCase() + '-' + itemId + '-' + Math.floor(Math.random() * 9000 + 1000);
     barcode = toPersianDigits(barcode.replace(/\d/g, d => d));
-    document.getElementById('barcode_label_' + itemId).innerHTML = '<span class="badge bg-dark">'+barcode+'</span>';
+    document.getElementById('barcode_label_' + itemId).innerHTML = '<span class="badge bg-dark">' + barcode + '</span>';
     let hidden = document.getElementById('barcode_input_' + itemId);
     if (!hidden) {
         let input = document.createElement('input');
@@ -119,11 +128,11 @@ window.generateBarcode = function(itemId, itemName) {
 
 function renderSalesTable(sales) {
     let tbody = '';
-    if(sales.length === 0) {
+    if (sales.length === 0) {
         tbody = '<tr><td colspan="6" class="text-center">فاکتوری یافت نشد.</td></tr>';
     } else {
-        sales.forEach(function(sale){
-            let buyer = sale.buyer && sale.buyer !== '-' ? sale.buyer : 'نامشخص';
+        sales.forEach(function (sale) {
+            let buyer = sale.buyer ? sale.buyer : 'نامشخص';
             tbody += `<tr>
                 <td>
                     <button type="button" class="btn btn-success btn-sm" onclick="selectSaleAjax(${sale.id})"><i class="fa fa-plus"></i></button>
@@ -150,13 +159,13 @@ function loadSalesTable() {
 loadSalesTable();
 
 document.getElementById('filter_field').addEventListener('change', loadSalesTable);
-document.getElementById('sale_search').addEventListener('input', function() {
+document.getElementById('sale_search').addEventListener('input', function () {
     clearTimeout(window.saleSearchTimeout);
     window.saleSearchTimeout = setTimeout(loadSalesTable, 500);
 });
 document.getElementById('btn_refresh').addEventListener('click', loadSalesTable);
 
-window.selectSaleAjax = function(saleId) {
+window.selectSaleAjax = function (saleId) {
     fetch(`/api/invoices/${saleId}`)
         .then(res => res.json())
         .then(sale => {
@@ -164,6 +173,7 @@ window.selectSaleAjax = function(saleId) {
             document.getElementById('sale_id').value = sale.id;
             document.getElementById('info_invoice_number').innerText = toPersianDigits(sale.invoice_number);
             document.getElementById('info_created_at').innerText = sale.created_at;
+            // مقدار خریدار را اینجا هم از full_name بگیر
             document.getElementById('info_buyer').innerText = sale.buyer && sale.buyer !== '-' ? sale.buyer : 'نامشخص';
             document.getElementById('info_seller').innerText = sale.seller;
             document.getElementById('info_final_amount').innerText = toPersianDigits(sale.final_amount);
@@ -171,3 +181,4 @@ window.selectSaleAjax = function(saleId) {
             document.getElementById('items_table_wrapper').innerHTML = renderItemsTable(sale.items);
         });
 };
+});

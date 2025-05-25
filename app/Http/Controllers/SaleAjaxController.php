@@ -9,24 +9,18 @@ class SaleAjaxController extends Controller
 {
     public function latest(Request $request)
     {
-        $filterField = $request->get('filter', 'all');
-        $search = $request->get('search', '');
-
-        // ارتباط buyer به customers است و باید لود شود
-        $query = Sale::with(['buyer', 'seller'])
-            ->orderBy('created_at', 'desc');
-
-        // فیلتر جستجو همانند قبل...
-
-        $sales = $query->limit(10)->get();
+        $sales = Sale::with(['customer.person', 'seller'])->orderBy('created_at', 'desc')->limit(10)->get();
 
         $result = $sales->map(function($sale){
+            $buyerFullName = 'نامشخص';
+            if ($sale->customer && $sale->customer->person) {
+                $buyerFullName = $sale->customer->person->full_name;
+            }
             return [
                 'id' => $sale->id,
                 'invoice_number' => $sale->invoice_number,
                 'created_at' => jdate($sale->created_at)->format('Y/m/d'),
-                // خریدار: اگر موجود باشد name مشتری را نمایش بده
-                'buyer' => $sale->buyer ? $sale->buyer->name : 'نامشخص',
+                'buyer' => $buyerFullName,
                 'seller' => $sale->seller ? $sale->seller->first_name . ' ' . $sale->seller->last_name : '',
                 'final_amount' => number_format($sale->final_amount),
             ];

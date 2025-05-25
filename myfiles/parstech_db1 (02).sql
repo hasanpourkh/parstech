@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 16, 2025 at 09:51 PM
+-- Generation Time: May 25, 2025 at 11:46 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,44 @@ SET time_zone = "+00:00";
 --
 -- Database: `parstech_db1`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `accounts`
+--
+
+CREATE TABLE `accounts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `code` varchar(255) NOT NULL COMMENT 'کد حساب',
+  `name` varchar(255) NOT NULL COMMENT 'عنوان حساب',
+  `type` enum('asset','liability','equity','income','expense') NOT NULL COMMENT 'نوع حساب',
+  `parent_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'حساب والد',
+  `description` text DEFAULT NULL COMMENT 'توضیحات',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `activity_log`
+--
+
+CREATE TABLE `activity_log` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `log_name` varchar(255) DEFAULT NULL,
+  `description` text NOT NULL,
+  `subject_type` varchar(255) DEFAULT NULL,
+  `event` varchar(255) DEFAULT NULL,
+  `subject_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `causer_type` varchar(255) DEFAULT NULL,
+  `causer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `properties` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`properties`)),
+  `batch_uuid` char(36) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -58,7 +96,7 @@ CREATE TABLE `brands` (
 --
 
 INSERT INTO `brands` (`id`, `name`, `image`, `created_at`, `updated_at`) VALUES
-(1, 'تسکو', NULL, '2025-05-16 09:06:29', '2025-05-16 09:06:29');
+(1, 'تسکو', NULL, '2025-05-21 07:52:14', '2025-05-21 07:52:14');
 
 -- --------------------------------------------------------
 
@@ -108,9 +146,12 @@ CREATE TABLE `categories` (
 --
 
 INSERT INTO `categories` (`id`, `name`, `type`, `code`, `category_type`, `parent_id`, `description`, `image`, `created_at`, `updated_at`) VALUES
-(1, 'اداری', NULL, 'per1001', 'person', NULL, NULL, NULL, '2025-05-16 09:05:08', '2025-05-16 09:05:08'),
-(2, 'کامپیوتر', NULL, 'pro1001', 'product', NULL, NULL, NULL, '2025-05-16 09:05:17', '2025-05-16 09:05:17'),
-(3, 'نصب', NULL, 'ser1001', 'service', NULL, NULL, NULL, '2025-05-16 15:19:42', '2025-05-16 15:19:42');
+(1, 'خدمات', NULL, 'ser1001', 'service', NULL, NULL, NULL, '2025-05-21 03:17:38', '2025-05-21 03:17:38'),
+(2, 'اشخاص', NULL, 'per1001', 'person', NULL, NULL, NULL, '2025-05-21 07:51:42', '2025-05-21 07:51:42'),
+(3, 'کالا', NULL, 'pro1001', 'product', NULL, NULL, NULL, '2025-05-21 07:51:51', '2025-05-21 07:51:51'),
+(4, 'کام\\یوتر', NULL, 'pro1002', 'product', NULL, NULL, NULL, '2025-05-24 00:23:55', '2025-05-24 00:23:55'),
+(5, 'کامپیوتر', NULL, 'pro1003', 'product', NULL, NULL, NULL, '2025-05-24 00:24:18', '2025-05-24 00:24:18'),
+(6, 'موس', NULL, 'pro1004', 'product', 5, NULL, NULL, '2025-05-24 00:24:28', '2025-05-24 00:24:28');
 
 -- --------------------------------------------------------
 
@@ -1488,6 +1529,33 @@ INSERT INTO `cities` (`id`, `name`, `province_id`, `created_at`, `updated_at`) V
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `contacts`
+--
+
+CREATE TABLE `contacts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `contact_messages`
+--
+
+CREATE TABLE `contact_messages` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `currencies`
 --
 
@@ -1506,7 +1574,7 @@ CREATE TABLE `currencies` (
 --
 
 INSERT INTO `currencies` (`id`, `title`, `symbol`, `code`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'ریال', 'ریال', 'rial', 1, '2025-05-16 15:58:50', '2025-05-16 15:58:50');
+(1, 'ارز', 'ارز', 'ارز', 1, '2025-05-20 06:08:08', '2025-05-20 06:08:08');
 
 -- --------------------------------------------------------
 
@@ -1656,6 +1724,42 @@ CREATE TABLE `job_batches` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `journal_entries`
+--
+
+CREATE TABLE `journal_entries` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `entry_number` varchar(255) NOT NULL COMMENT 'شماره سند روزنامه',
+  `entry_date` date NOT NULL COMMENT 'تاریخ سند',
+  `description` varchar(255) DEFAULT NULL COMMENT 'شرح کلی سند',
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'ایجادکننده',
+  `related_invoice_id` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'ارتباط با فاکتور فروش/خرید',
+  `document_type` varchar(255) DEFAULT NULL COMMENT 'نوع سند (فروش، خرید، هزینه، درآمد و...)',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `journal_entry_items`
+--
+
+CREATE TABLE `journal_entry_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `journal_entry_id` bigint(20) UNSIGNED NOT NULL,
+  `account_id` bigint(20) UNSIGNED NOT NULL COMMENT 'حساب معین',
+  `debit` decimal(20,2) NOT NULL DEFAULT 0.00 COMMENT 'مبلغ بدهکار',
+  `credit` decimal(20,2) NOT NULL DEFAULT 0.00 COMMENT 'مبلغ بستانکار',
+  `description` varchar(255) DEFAULT NULL COMMENT 'شرح آیتم سند',
+  `reference` varchar(255) DEFAULT NULL COMMENT 'شماره یا مرجع تراکنش',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `migrations`
 --
 
@@ -1673,20 +1777,20 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (1, '0001_01_01_000000_create_users_table', 1),
 (2, '0001_01_01_000001_create_cache_table', 1),
 (3, '0001_01_01_000002_create_jobs_table', 1),
-(4, '2024_05_07_000000_create_invoices_table', 1),
-(5, '2024_05_07_000001_create_categories_table', 1),
-(6, '2024_05_07_000001_create_units_table', 1),
-(7, '2024_05_07_000002_create_brands_table', 1),
-(8, '2024_05_07_000003_create_products_table', 1),
-(9, '2024_05_11_002051_create_sellers_table', 1),
-(10, '2024_05_12_000001_create_persons_table', 1),
-(11, '2024_05_13_000001_add_customer_id_to_invoices_table', 1),
-(12, '2025_05_05_165450_create_customers_table', 1),
-(13, '2025_05_05_165529_create_incomes_table', 1),
-(14, '2025_05_05_165648_create_expenses_table', 1),
-(15, '2025_05_07_000001_add_columns_to_products_table', 1),
-(16, '2025_05_07_133000_create_sessions_table', 1),
-(17, '2025_05_07_201616_create_services_table', 1),
+(4, '2023_01_01_000001_create_service_categories_table', 1),
+(5, '2024_05_07_000000_create_invoices_table', 1),
+(6, '2024_05_07_000001_create_categories_table', 1),
+(7, '2024_05_07_000001_create_units_table', 1),
+(8, '2024_05_07_000002_create_brands_table', 1),
+(9, '2024_05_07_000003_create_products_table', 1),
+(10, '2024_05_11_002051_create_sellers_table', 1),
+(11, '2024_05_12_000001_create_persons_table', 1),
+(12, '2024_05_13_000001_add_customer_id_to_invoices_table', 1),
+(13, '2025_05_05_165450_create_customers_table', 1),
+(14, '2025_05_05_165529_create_incomes_table', 1),
+(15, '2025_05_05_165648_create_expenses_table', 1),
+(16, '2025_05_07_000001_add_columns_to_products_table', 1),
+(17, '2025_05_07_133000_create_sessions_table', 1),
 (18, '2025_05_08_042553_add_type_to_categories_table', 1),
 (19, '2025_05_09_181243_create_provinces_table', 1),
 (20, '2025_05_09_184747_create_cities_table', 1),
@@ -1699,13 +1803,39 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (27, '2025_05_12_035154_create_people_table', 1),
 (28, '2025_05_14_000001_create_sales_table', 1),
 (29, '2025_05_15_000001_create_customer_purchases_table', 1),
-(30, '2025_05_15_210849_add_invoice_number_to_sales_table', 1),
-(31, '2025_05_16_194041_add_reference_to_sales_table', 2),
-(32, '2025_05_16_194418_add_customer_id_to_sales_table', 3),
-(33, '2025_05_16_194539_add_currency_id_to_sales_table', 4),
-(34, '2025_05_16_194630_add_title_to_sales_table', 5),
-(35, '2025_05_16_194714_add_issued_at_to_sales_table', 6),
-(36, '2025_05_16_194835_create_sale_items_table', 7);
+(30, '2025_05_16_194835_create_sale_items_table', 1),
+(31, '2025_05_16_201819_add_purchase_percent_to_persons_table', 1),
+(32, '2025_05_16_202806_add_photo_to_persons_table', 1),
+(33, '2025_05_16_211750_add_total_amount_and_discount_to_sales_table', 1),
+(34, '2025_05_16_212824_update_persons_and_sellers_table', 1),
+(35, '2025_05_16_213643_update_sales_table_add_amount_fields', 1),
+(36, '2025_05_16_214415_update_sales_table_add_payment_fields', 1),
+(37, '2025_05_17_175459_create_activity_log_table', 1),
+(38, '2025_05_17_175500_add_event_column_to_activity_log_table', 1),
+(39, '2025_05_17_175501_add_batch_uuid_column_to_activity_log_table', 1),
+(40, '2025_05_17_180905_create_services_table', 1),
+(41, '2025_05_19_162909_add_title_to_sales_table', 1),
+(42, '2025_05_20_063347_add_fields_to_sales_table', 1),
+(43, '2025_05_20_083428_create_service_fields_table', 1),
+(44, '2025_05_20_083429_create_service_sales_table', 1),
+(45, '2025_05_20_091435_create_service_sale_items_table', 1),
+(46, '2025_05_20_091437_create_service_field_values_table', 1),
+(47, '2025_05_20_163832_create_service_dynamic_forms_table', 2),
+(48, '2025_05_21_060822_create_contact_messages_table', 3),
+(49, '2025_05_21_060917_create_contacts_table', 3),
+(50, '2025_05_22_131500_add_image_to_services_table', 4),
+(51, '2025_05_22_131916_add_type_to_products_table', 5),
+(52, '2025_05_22_140855_add_service_info_to_services_table', 6),
+(53, '2025_05_22_144530_add_unit_id_to_services_table', 7),
+(54, '2025_05_22_144910_add_missing_fields_to_services_table', 8),
+(55, '2025_05_22_191941_add_product_id_to_services_table', 9),
+(56, '2025_05_22_213857_add_payment_fields_to_sales_table', 10),
+(57, '2025_05_22_225112_add_phone_to_users_table', 11),
+(58, '2025_05_22_230819_add_share_percent_to_persons_table', 12),
+(59, '2025_05_22_230852_create_product_shareholder_table', 12),
+(60, '2025_05_23_001540_create_journal_entries_table', 13),
+(61, '2025_05_23_001839_create_accounts_table', 14),
+(62, '2025_05_23_062540_create_sale_returns_table', 15);
 
 -- --------------------------------------------------------
 
@@ -1734,7 +1864,9 @@ CREATE TABLE `persons` (
   `last_name` varchar(255) DEFAULT NULL,
   `company_name` varchar(255) DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
+  `photo` varchar(255) DEFAULT NULL,
   `type` varchar(255) DEFAULT NULL,
+  `share_percent` decimal(5,2) DEFAULT NULL,
   `nickname` varchar(255) DEFAULT NULL,
   `accounting_code` varchar(255) DEFAULT NULL,
   `credit_limit` decimal(15,2) NOT NULL DEFAULT 0.00,
@@ -1763,16 +1895,20 @@ CREATE TABLE `persons` (
   `join_date` date DEFAULT NULL,
   `last_purchase_at` timestamp NULL DEFAULT NULL,
   `total_purchases` bigint(20) NOT NULL DEFAULT 0,
+  `purchase_percent` double DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `full_name` varchar(255) GENERATED ALWAYS AS (concat(coalesce(`first_name`,''),' ',coalesce(`last_name`,''))) VIRTUAL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `persons`
 --
 
-INSERT INTO `persons` (`id`, `first_name`, `last_name`, `company_name`, `title`, `type`, `nickname`, `accounting_code`, `credit_limit`, `price_list`, `tax_type`, `national_code`, `economic_code`, `registration_number`, `branch_code`, `description`, `address`, `country`, `province`, `city`, `postal_code`, `phone`, `mobile`, `fax`, `phone1`, `phone2`, `phone3`, `email`, `website`, `birth_date`, `marriage_date`, `join_date`, `last_purchase_at`, `total_purchases`, `created_at`, `updated_at`) VALUES
-(1, 'مهدی', 'شمس', NULL, NULL, 'customer', NULL, '001', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ثسصثضف', 'ایران', '11', '1256', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '2025-05-16 09:01:31', '2025-05-16 09:01:31');
+INSERT INTO `persons` (`id`, `first_name`, `last_name`, `company_name`, `title`, `photo`, `type`, `share_percent`, `nickname`, `accounting_code`, `credit_limit`, `price_list`, `tax_type`, `national_code`, `economic_code`, `registration_number`, `branch_code`, `description`, `address`, `country`, `province`, `city`, `postal_code`, `phone`, `mobile`, `fax`, `phone1`, `phone2`, `phone3`, `email`, `website`, `birth_date`, `marriage_date`, `join_date`, `last_purchase_at`, `total_purchases`, `purchase_percent`, `created_at`, `updated_at`) VALUES
+(1, 'مصطفی', 'عباس آبادی', NULL, NULL, NULL, 'customer', NULL, NULL, 'persons=-1001', 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'یسبل', 'ایران', '11', '1256', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2025-05-21 07:53:21', '2025-05-21 07:53:21'),
+(2, 'مشتری', 'حضوری', NULL, NULL, NULL, 'guest', NULL, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2025-05-22 14:41:15', '2025-05-22 14:41:15'),
+(3, 'مصطفی', 'اکرادی', 'پارس تک', NULL, NULL, 'shareholder', NULL, NULL, 'persons=-1002', 0.00, NULL, NULL, '5730008971', NULL, NULL, NULL, NULL, 'نقاب خ ابوترابی', 'ایران', '11', '1256', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2025-05-22 19:01:26', '2025-05-22 19:01:26');
 
 -- --------------------------------------------------------
 
@@ -1804,16 +1940,43 @@ CREATE TABLE `products` (
   `sell_price` bigint(20) DEFAULT NULL,
   `discount` int(11) DEFAULT NULL,
   `store_barcode` varchar(100) DEFAULT NULL,
-  `attributes` text DEFAULT NULL
+  `attributes` text DEFAULT NULL,
+  `type` varchar(255) NOT NULL DEFAULT 'product'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `name`, `code`, `category_id`, `brand_id`, `image`, `gallery`, `video`, `short_desc`, `description`, `stock`, `price`, `min_stock`, `unit`, `barcode`, `is_active`, `created_at`, `updated_at`, `weight`, `buy_price`, `sell_price`, `discount`, `store_barcode`, `attributes`) VALUES
-(1, 'ماوس تسکو مدل TM2018N', '0001', 2, 1, 'products/mrEe9K6AyMHC9mjcYYbC9yBriWrT7U8ZT5t8S7G2.jpg', NULL, NULL, NULL, 'شسبیلصث', 15, NULL, 1, 'عدد', NULL, 1, '2025-05-16 09:09:52', '2025-05-16 15:08:28', NULL, 1500000, 2000000, NULL, NULL, NULL),
-(2, 'کامپیوتر کامل تک زون مدل Game Monster 14900K', '0002', 2, 1, 'products/urXYysYqPdRNIT5ukjrYLbNmlfRNIlGgxpeIN4s3.jpg', NULL, NULL, 'کامپیوتر Game Monster 14900K محصولی جدید از برند تک زون ایرانیکا است که بصورت تخصصی جهت کاربری بازی معرفی گردیده است. این محصول به عنوان قدرتمندترین کامپیوتر مخصوص با', 'کامپیوتر Game Monster 14900K محصولی جدید از برند تک زون ایرانیکا است که بصورت تخصصی جهت کاربری بازی معرفی گردیده است. این محصول به عنوان قدرتمندترین کامپیوتر مخصوص بازی در ایران با هدف دستیابی به حداکثر قدرت پردازش و گرافیک، طراحی و بهینه سازی گردیده و برای ساخت آن از باکیفیت ترین قطعات موجود در بازار استفاده شده؛ به همین علت تا سالها پاسخگوی تمامی نیازها در زمینه کاربری گیم می باشد. قطعات مورد استفاده در این رایانه شامل مادربرد MB ASUS ROG MAXIMUS Z790 HERO بعنوان برترین موجود در بازار، پردازنده قدرتمند 24 هسته‌ای Intel Core i9-14900K، رم 128 گیگابایت GSKILL CL30 DDR5 با فرکانس 6000MHz، دو دستگاه کارت گرافیک بی‌همتای Nvidia GeForce RTX 4090 هر کدام با 24 گیگابایت حافظه، حافظه پرسرعت اس‌اس‌دی Corsair MP700 PCIe 5.0 M.2 با ظرفیت 2 ترابایت، حافظه مغناطیسی Western Digital Red Plus با ظرفیت 8 ترابایت، پاور پرقدرت 1650 وات SilverStone DA1650-G، فن خنک کننده مایع ASUS ROG RYUO III 360 ARGB، ماوس و کیبورد مخصوص بازی Razer مدل Basilisk V3 و BlackWidow V3 می باشد. همچنین به همراه این سیستم قدرتمند مانیتور خمیده گیمینگ ال جی مدل LG 49GR85DC-B 49 Inch نیز قرار دارد که کیفیت بی نهایتی برای بازی و کارهای گرافیکی به شما میدهد. لطفا به عکس راهنمای تشخیص کالای اصل برند تک زون از تقلبی توجه فرمایید.', 5, NULL, 1, 'عدد', 'BARCODE-605454', 1, '2025-05-16 15:06:24', '2025-05-16 15:06:24', 9000, 90000000, 100000000, 1, 'BARCODE-253904', NULL);
+INSERT INTO `products` (`id`, `name`, `code`, `category_id`, `brand_id`, `image`, `gallery`, `video`, `short_desc`, `description`, `stock`, `price`, `min_stock`, `unit`, `barcode`, `is_active`, `created_at`, `updated_at`, `weight`, `buy_price`, `sell_price`, `discount`, `store_barcode`, `attributes`, `type`) VALUES
+(1, 'موس', '0001', 3, 1, 'products/4cdYDZD4TvBwSZGwA4kjYrAYe8TQts2VsoPz2bMf.jpg', NULL, NULL, 'سیب', NULL, 6, NULL, 2, 'عدد', 'BARCODE-812475', 1, '2025-05-21 07:52:47', '2025-05-25 16:53:12', NULL, 150000, 200000, NULL, 'BARCODE-890361', NULL, 'product'),
+(2, 'ویندوز', 'services-1002', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, '1', NULL, 0, '2025-05-22 09:36:16', '2025-05-22 09:36:16', NULL, NULL, 150000, NULL, NULL, NULL, 'service'),
+(3, 'نصب', 'services-1004', 1, NULL, NULL, NULL, NULL, NULL, 'شسی', 0, NULL, 0, 'ساعت', NULL, 1, '2025-05-22 10:50:58', '2025-05-22 10:50:58', NULL, NULL, 1500, NULL, NULL, NULL, 'service'),
+(4, 'نصب دوربین مداربسته', 'services-1005', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 'عدد', NULL, 1, '2025-05-22 15:14:22', '2025-05-22 15:14:22', NULL, NULL, 2000000, NULL, NULL, NULL, 'service'),
+(5, 'نصب دوربین مداربسته', 'services-1006', 1, NULL, 'services/2tZjEzRou4Mvr9EhsmyAWJU8qooN9hM4RDMsrHmD.png', NULL, NULL, 'سیب', 'بقصضث', 0, NULL, 0, 'روز', NULL, 1, '2025-05-22 15:16:15', '2025-05-22 15:16:15', NULL, NULL, 2000000, NULL, NULL, NULL, 'service'),
+(6, 'نصب دوربین مداربسته', 'services-1007', 1, NULL, NULL, NULL, NULL, 'سیب', 'بقصضث', 0, NULL, 0, 'روز', NULL, 1, '2025-05-22 15:20:34', '2025-05-22 15:20:34', NULL, NULL, 2000000, NULL, NULL, NULL, 'service');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_shareholder`
+--
+
+CREATE TABLE `product_shareholder` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `product_id` bigint(20) UNSIGNED NOT NULL,
+  `person_id` bigint(20) UNSIGNED NOT NULL,
+  `percent` decimal(5,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `product_shareholder`
+--
+
+INSERT INTO `product_shareholder` (`id`, `product_id`, `person_id`, `percent`, `created_at`, `updated_at`) VALUES
+(1, 1, 3, 100.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1873,20 +2036,61 @@ INSERT INTO `provinces` (`id`, `name`, `created_at`, `updated_at`) VALUES
 
 CREATE TABLE `sales` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `invoice_number` varchar(50) NOT NULL,
+  `invoice_number` varchar(255) NOT NULL,
   `reference` varchar(255) DEFAULT NULL,
-  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
   `seller_id` bigint(20) UNSIGNED NOT NULL,
   `currency_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `total_price` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `discount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tax` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `final_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `paid_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `remaining_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` varchar(255) NOT NULL DEFAULT 'pending',
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `payment_status` varchar(255) NOT NULL DEFAULT 'unpaid',
+  `cash_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `cash_reference` varchar(255) DEFAULT NULL,
+  `cash_paid_at` timestamp NULL DEFAULT NULL,
+  `card_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `card_reference` varchar(255) DEFAULT NULL,
+  `card_number` varchar(16) DEFAULT NULL,
+  `card_paid_at` timestamp NULL DEFAULT NULL,
+  `pos_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `pos_reference` varchar(255) DEFAULT NULL,
+  `pos_paid_at` timestamp NULL DEFAULT NULL,
+  `cheque_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `cheque_number` varchar(255) DEFAULT NULL,
+  `cheque_bank` varchar(255) DEFAULT NULL,
+  `cheque_due_date` date DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
   `issued_at` timestamp NULL DEFAULT NULL,
-  `product_id` bigint(20) UNSIGNED NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `total_price` decimal(15,2) NOT NULL,
-  `sale_date` timestamp NOT NULL DEFAULT current_timestamp(),
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `payment_method` varchar(255) DEFAULT NULL,
+  `payment_notes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sales`
+--
+
+INSERT INTO `sales` (`id`, `invoice_number`, `reference`, `customer_id`, `seller_id`, `currency_id`, `total_price`, `total_amount`, `discount`, `tax`, `final_amount`, `paid_amount`, `remaining_amount`, `status`, `paid_at`, `payment_status`, `cash_amount`, `cash_reference`, `cash_paid_at`, `card_amount`, `card_reference`, `card_number`, `card_paid_at`, `pos_amount`, `pos_reference`, `pos_paid_at`, `cheque_amount`, `cheque_number`, `cheque_bank`, `cheque_due_date`, `description`, `created_at`, `updated_at`, `deleted_at`, `title`, `issued_at`, `payment_method`, `payment_notes`) VALUES
+(1, 'invoices-10001', NULL, 1, 1, 1, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-21 08:45:39', '2025-05-21 08:45:39', NULL, 'قبف', '2025-05-21 08:45:39', NULL, NULL),
+(6, 'invoices-10002', NULL, 1, 1, 1, 150000.00, 0.00, 0.00, 0.00, 150000.00, 150000.00, 0.00, 'paid', '2025-05-22 19:58:13', 'unpaid', 140000.00, NULL, '2025-05-22 19:58:13', 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-22 11:04:14', '2025-05-22 19:58:13', NULL, NULL, '2025-05-22 11:04:14', 'cash', NULL),
+(7, 'invoices-10003', NULL, 2, 1, 1, 800000.00, 0.00, 0.00, 0.00, 800000.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-22 14:41:15', '2025-05-22 14:41:15', NULL, NULL, '2025-05-22 14:41:15', NULL, NULL),
+(8, 'invoices-10004', NULL, 2, 1, 1, 400000.00, 0.00, 0.00, 0.00, 400000.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-22 14:42:33', '2025-05-22 14:42:33', NULL, NULL, '2025-05-22 14:42:33', NULL, NULL),
+(9, 'invoices-10005', NULL, 2, 1, 1, 150000.00, 0.00, 0.00, 0.00, 150000.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-22 14:43:02', '2025-05-22 14:43:02', NULL, NULL, '2025-05-22 14:43:02', NULL, NULL),
+(10, 'invoices-10006', NULL, 1, 1, 1, 201500.00, 0.00, 0.00, 0.00, 201500.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-22 15:54:19', '2025-05-22 15:54:19', NULL, NULL, '2025-05-22 15:54:19', NULL, NULL),
+(11, 'invoices-10007', NULL, 2, 1, 1, 201500.00, 0.00, 0.00, 0.00, 201500.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-22 15:59:25', '2025-05-22 15:59:25', NULL, NULL, '2025-05-22 15:59:25', NULL, NULL),
+(12, 'invoices-10008', NULL, 1, 1, 1, 801500.00, 0.00, 0.00, 0.00, 801500.00, 801500.00, 0.00, 'paid', '2025-05-23 16:36:34', 'unpaid', 801500.00, NULL, '2025-05-23 16:36:34', 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-23 16:36:00', '2025-05-23 16:36:34', NULL, NULL, '2025-05-23 16:36:00', 'cash', NULL),
+(17, 'invoices-10009', NULL, 1, 1, 1, 200000.00, 0.00, 0.00, 0.00, 200000.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-25 16:45:00', '2025-05-25 16:45:00', NULL, NULL, '2025-05-25 16:45:00', NULL, NULL),
+(18, 'invoices-10010', '15', 1, 1, 1, 401500.00, 0.00, 0.00, 0.00, 401500.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-25 16:47:37', '2025-05-25 16:47:37', NULL, 'ثقف', '2025-05-25 16:47:37', NULL, NULL),
+(19, 'invoices-10011', NULL, 2, 1, 1, 201500.00, 0.00, 0.00, 0.00, 201500.00, 0.00, 0.00, 'pending', NULL, 'unpaid', 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, 0.00, NULL, NULL, 0.00, NULL, NULL, NULL, NULL, '2025-05-25 16:53:12', '2025-05-25 16:53:12', NULL, 'فروش سریع', '2025-05-25 16:53:12', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1901,10 +2105,51 @@ CREATE TABLE `sale_items` (
   `description` varchar(255) DEFAULT NULL,
   `unit` varchar(255) DEFAULT NULL,
   `quantity` int(11) NOT NULL,
-  `unit_price` double NOT NULL DEFAULT 0,
-  `discount` double DEFAULT NULL,
-  `tax` double DEFAULT NULL,
-  `total` double DEFAULT NULL,
+  `unit_price` decimal(15,2) NOT NULL,
+  `discount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tax` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total` decimal(15,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sale_items`
+--
+
+INSERT INTO `sale_items` (`id`, `sale_id`, `product_id`, `description`, `unit`, `quantity`, `unit_price`, `discount`, `tax`, `total`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 'سیب', '-', 1, 0.00, 0.00, 0.00, 0.00, '2025-05-21 08:45:39', '2025-05-21 08:45:39'),
+(7, 6, 3, '', '-', 1, 150000.00, 0.00, 0.00, 150000.00, '2025-05-22 11:04:14', '2025-05-22 11:04:14'),
+(8, 7, 1, '', '', 2, 200000.00, 0.00, 0.00, 400000.00, '2025-05-22 14:41:15', '2025-05-22 14:41:15'),
+(9, 7, 1, '', '', 1, 200000.00, 0.00, 0.00, 200000.00, '2025-05-22 14:41:15', '2025-05-22 14:41:15'),
+(10, 7, 1, '', '', 1, 200000.00, 0.00, 0.00, 200000.00, '2025-05-22 14:41:15', '2025-05-22 14:41:15'),
+(11, 8, 1, '', '', 2, 200000.00, 0.00, 0.00, 400000.00, '2025-05-22 14:42:33', '2025-05-22 14:42:33'),
+(12, 9, 2, '', '', 1, 150000.00, 0.00, 0.00, 150000.00, '2025-05-22 14:43:02', '2025-05-22 14:43:02'),
+(13, 10, 1, '', 'عدد', 1, 200000.00, 0.00, 0.00, 200000.00, '2025-05-22 15:54:19', '2025-05-22 15:54:19'),
+(14, 10, 6, '', 'ساعت', 1, 1500.00, 0.00, 0.00, 1500.00, '2025-05-22 15:54:19', '2025-05-22 15:54:19'),
+(15, 11, 1, '', 'عدد', 1, 200000.00, 0.00, 0.00, 200000.00, '2025-05-22 15:59:25', '2025-05-22 15:59:25'),
+(16, 11, 6, '', 'ساعت', 1, 1500.00, 0.00, 0.00, 1500.00, '2025-05-22 15:59:25', '2025-05-22 15:59:25'),
+(17, 12, 1, '', 'عدد', 4, 200000.00, 0.00, 0.00, 800000.00, '2025-05-23 16:36:00', '2025-05-23 16:36:00'),
+(18, 12, 6, '', 'ساعت', 1, 1500.00, 0.00, 0.00, 1500.00, '2025-05-23 16:36:00', '2025-05-23 16:36:00'),
+(19, 17, 1, '', 'عدد', 1, 200000.00, 0.00, 0.00, 200000.00, '2025-05-25 16:45:00', '2025-05-25 16:45:00'),
+(20, 18, 1, '', 'عدد', 2, 200000.00, 0.00, 0.00, 400000.00, '2025-05-25 16:47:37', '2025-05-25 16:47:37'),
+(21, 18, 6, '', 'ساعت', 1, 1500.00, 0.00, 0.00, 1500.00, '2025-05-25 16:47:37', '2025-05-25 16:47:37'),
+(22, 19, 1, '', 'عدد', 1, 200000.00, 0.00, 0.00, 200000.00, '2025-05-25 16:53:12', '2025-05-25 16:53:12'),
+(23, 19, 6, '', 'ساعت', 1, 1500.00, 0.00, 0.00, 1500.00, '2025-05-25 16:53:12', '2025-05-25 16:53:12');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_returns`
+--
+
+CREATE TABLE `sale_returns` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `sale_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `return_date` date NOT NULL,
+  `total_amount` bigint(20) NOT NULL,
+  `note` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1932,7 +2177,8 @@ CREATE TABLE `sellers` (
   `branch_code` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `full_name` varchar(255) GENERATED ALWAYS AS (concat(coalesce(`first_name`,''),' ',coalesce(`last_name`,''))) VIRTUAL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1940,7 +2186,7 @@ CREATE TABLE `sellers` (
 --
 
 INSERT INTO `sellers` (`id`, `seller_code`, `first_name`, `last_name`, `nickname`, `mobile`, `image`, `code_editable`, `company_name`, `title`, `national_code`, `economic_code`, `registration_number`, `branch_code`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'Seller-10001', 'مصطفی', 'اکرادی', NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-05-16 09:02:11', '2025-05-16 09:02:11');
+(1, 'Seller-10001', 'مصطفی', 'اکرادی', NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-05-21 07:53:51', '2025-05-21 07:53:51');
 
 -- --------------------------------------------------------
 
@@ -1967,11 +2213,127 @@ CREATE TABLE `seller_bank_accounts` (
 
 CREATE TABLE `services` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `code` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `service_code` varchar(255) DEFAULT NULL,
+  `service_info` varchar(255) DEFAULT NULL,
+  `service_category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `unit_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `unit` varchar(255) DEFAULT NULL,
   `price` bigint(20) DEFAULT NULL,
+  `tax` int(11) DEFAULT NULL,
+  `execution_cost` bigint(20) DEFAULT NULL,
+  `short_description` varchar(255) DEFAULT NULL,
+  `info_link` text DEFAULT NULL,
+  `full_description` text DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `is_vat_included` tinyint(1) NOT NULL DEFAULT 1,
+  `is_discountable` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `services`
+--
+
+INSERT INTO `services` (`id`, `product_id`, `title`, `service_code`, `service_info`, `service_category_id`, `unit_id`, `unit`, `price`, `tax`, `execution_cost`, `short_description`, `info_link`, `full_description`, `description`, `image`, `is_active`, `is_vat_included`, `is_discountable`, `created_at`, `updated_at`) VALUES
+(6, NULL, 'نصب', 'services-1004', 'نثب دوربین', NULL, 2, 'ساعت', 1500, NULL, NULL, NULL, NULL, NULL, 'شسی', NULL, 1, 1, 1, '2025-05-22 10:50:58', '2025-05-22 10:50:58'),
+(9, 6, 'نصب دوربین مداربسته', 'services-1007', 'سیب', 1, 5, 'روز', 2000000, NULL, NULL, 'سیب', NULL, 'یسبسیسیب', 'بقصضث', NULL, 1, 1, 1, '2025-05-22 15:20:34', '2025-05-22 15:20:34');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_categories`
+--
+
+CREATE TABLE `service_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_dynamic_forms`
+--
+
+CREATE TABLE `service_dynamic_forms` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `form_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`form_data`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_fields`
+--
+
+CREATE TABLE `service_fields` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `service_id` bigint(20) UNSIGNED NOT NULL,
+  `label` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `required` tinyint(1) NOT NULL DEFAULT 0,
+  `options` text DEFAULT NULL,
+  `order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_field_values`
+--
+
+CREATE TABLE `service_field_values` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `service_sale_item_id` bigint(20) UNSIGNED NOT NULL,
+  `service_field_id` bigint(20) UNSIGNED NOT NULL,
+  `value` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_sales`
+--
+
+CREATE TABLE `service_sales` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `invoice_number` varchar(255) DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `customer_national_id` varchar(255) DEFAULT NULL,
+  `customer_mobile` varchar(255) DEFAULT NULL,
+  `total_price` bigint(20) NOT NULL DEFAULT 0,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `service_sale_items`
+--
+
+CREATE TABLE `service_sale_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `service_sale_id` bigint(20) UNSIGNED NOT NULL,
+  `service_id` bigint(20) UNSIGNED NOT NULL,
+  `price` bigint(20) NOT NULL DEFAULT 0,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `note` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1996,7 +2358,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('Wl8o9EXK9Vded6ltIbJTXrGNQlHBJjvZ8Ql4unHo', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoieEJkMmpJTFZqUVY0NUZTYnhvNVFLSWNGZWZjd2dXRVQ2RHAxMENkYiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ5OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvc2VydmljZXMvYWpheC1saXN0P2xpbWl0PTEwIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1747425052);
+('XKRhmj5B5ehJTxaP9MluIRMjv8vEuj0LwNNbHvmx', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiQ05pQW1EeXVabm9pTUlLc1ZKVlVrWWQwVHlzcUE3WWJGRVhGT2hFZyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mzc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hcGkvaW52b2ljZXMvMTAiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjM6InVybCI7YTowOnt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1748209527);
 
 -- --------------------------------------------------------
 
@@ -2016,7 +2378,11 @@ CREATE TABLE `units` (
 --
 
 INSERT INTO `units` (`id`, `title`, `created_at`, `updated_at`) VALUES
-(1, 'عدد', '2025-05-16 09:08:15', '2025-05-16 09:08:15');
+(1, 'عدد', '2025-05-21 07:52:34', '2025-05-21 07:52:34'),
+(2, 'ساعت', '2025-05-22 08:10:59', '2025-05-22 08:10:59'),
+(3, 'ساعت 1', '2025-05-22 08:16:48', '2025-05-22 08:16:48'),
+(4, '1', '2025-05-22 09:05:09', '2025-05-22 09:05:09'),
+(5, 'روز', '2025-05-22 15:15:57', '2025-05-22 15:15:57');
 
 -- --------------------------------------------------------
 
@@ -2032,19 +2398,37 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `phone` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'مصطفی', 'akradim@hotmail.com', NULL, '$2y$12$1KP4vAfsrPCZqIxz9.6KxOGOj0coKaHFVFzxAarq0JpsnmGKNb5yi', 'JE4gLJKlbyIt9YnWIqCZs54DrJn8zNnOgzsdjAoA7oZqttr4pow73oAUGetm', '2025-05-16 09:00:06', '2025-05-16 09:00:06');
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `phone`) VALUES
+(1, 'مصطفی اکرادی', 'akradim@hotmail.com', NULL, '$2y$12$7onK3ZLrdzGY3pt0/ZBjfuafgHfDX.9jundcsWCFq2xvmmgTLE4Wu', 'N5NWHS5whnl8FgenJJ0o2HyEAZ2yajtVwalnfcRlN3EVHnSDazLxrKlT3af9', '2025-05-20 05:37:53', '2025-05-20 05:37:53', NULL);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `accounts_code_unique` (`code`),
+  ADD KEY `accounts_parent_id_foreign` (`parent_id`);
+
+--
+-- Indexes for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `subject` (`subject_type`,`subject_id`),
+  ADD KEY `causer` (`causer_type`,`causer_id`),
+  ADD KEY `activity_log_log_name_index` (`log_name`);
 
 --
 -- Indexes for table `bank_accounts`
@@ -2084,6 +2468,18 @@ ALTER TABLE `categories`
 ALTER TABLE `cities`
   ADD PRIMARY KEY (`id`),
   ADD KEY `cities_province_id_foreign` (`province_id`);
+
+--
+-- Indexes for table `contacts`
+--
+ALTER TABLE `contacts`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `contact_messages`
+--
+ALTER TABLE `contact_messages`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `currencies`
@@ -2155,6 +2551,22 @@ ALTER TABLE `job_batches`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `journal_entries`
+--
+ALTER TABLE `journal_entries`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `journal_entries_entry_number_unique` (`entry_number`),
+  ADD KEY `journal_entries_user_id_foreign` (`user_id`),
+  ADD KEY `journal_entries_related_invoice_id_foreign` (`related_invoice_id`);
+
+--
+-- Indexes for table `journal_entry_items`
+--
+ALTER TABLE `journal_entry_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `journal_entry_items_journal_entry_id_foreign` (`journal_entry_id`);
+
+--
 -- Indexes for table `migrations`
 --
 ALTER TABLE `migrations`
@@ -2182,6 +2594,14 @@ ALTER TABLE `products`
   ADD KEY `products_brand_id_foreign` (`brand_id`);
 
 --
+-- Indexes for table `product_shareholder`
+--
+ALTER TABLE `product_shareholder`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `product_shareholder_product_id_foreign` (`product_id`),
+  ADD KEY `product_shareholder_person_id_foreign` (`person_id`);
+
+--
 -- Indexes for table `provinces`
 --
 ALTER TABLE `provinces`
@@ -2193,10 +2613,8 @@ ALTER TABLE `provinces`
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `sales_invoice_number_unique` (`invoice_number`),
-  ADD KEY `sales_seller_id_foreign` (`seller_id`),
-  ADD KEY `sales_product_id_foreign` (`product_id`),
   ADD KEY `sales_customer_id_foreign` (`customer_id`),
-  ADD KEY `sales_currency_id_foreign` (`currency_id`);
+  ADD KEY `sales_seller_id_foreign` (`seller_id`);
 
 --
 -- Indexes for table `sale_items`
@@ -2205,6 +2623,14 @@ ALTER TABLE `sale_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sale_items_sale_id_foreign` (`sale_id`),
   ADD KEY `sale_items_product_id_foreign` (`product_id`);
+
+--
+-- Indexes for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_returns_sale_id_foreign` (`sale_id`),
+  ADD KEY `sale_returns_customer_id_foreign` (`customer_id`);
 
 --
 -- Indexes for table `sellers`
@@ -2225,8 +2651,48 @@ ALTER TABLE `seller_bank_accounts`
 --
 ALTER TABLE `services`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `services_code_unique` (`code`),
-  ADD KEY `services_category_id_foreign` (`category_id`);
+  ADD UNIQUE KEY `services_service_code_unique` (`service_code`);
+
+--
+-- Indexes for table `service_categories`
+--
+ALTER TABLE `service_categories`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `service_dynamic_forms`
+--
+ALTER TABLE `service_dynamic_forms`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `service_fields`
+--
+ALTER TABLE `service_fields`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `service_fields_service_id_foreign` (`service_id`);
+
+--
+-- Indexes for table `service_field_values`
+--
+ALTER TABLE `service_field_values`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `service_field_values_service_sale_item_id_foreign` (`service_sale_item_id`),
+  ADD KEY `service_field_values_service_field_id_foreign` (`service_field_id`);
+
+--
+-- Indexes for table `service_sales`
+--
+ALTER TABLE `service_sales`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `service_sale_items`
+--
+ALTER TABLE `service_sale_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `service_sale_items_service_sale_id_foreign` (`service_sale_id`),
+  ADD KEY `service_sale_items_service_id_foreign` (`service_id`);
 
 --
 -- Indexes for table `sessions`
@@ -2255,6 +2721,18 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `accounts`
+--
+ALTER TABLE `accounts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `bank_accounts`
 --
 ALTER TABLE `bank_accounts`
@@ -2270,13 +2748,25 @@ ALTER TABLE `brands`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `cities`
 --
 ALTER TABLE `cities`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1354;
+
+--
+-- AUTO_INCREMENT for table `contacts`
+--
+ALTER TABLE `contacts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `contact_messages`
+--
+ALTER TABLE `contact_messages`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `currencies`
@@ -2333,10 +2823,22 @@ ALTER TABLE `jobs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `journal_entries`
+--
+ALTER TABLE `journal_entries`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `journal_entry_items`
+--
+ALTER TABLE `journal_entry_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `people`
@@ -2348,13 +2850,19 @@ ALTER TABLE `people`
 -- AUTO_INCREMENT for table `persons`
 --
 ALTER TABLE `persons`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `product_shareholder`
+--
+ALTER TABLE `product_shareholder`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `provinces`
@@ -2366,12 +2874,18 @@ ALTER TABLE `provinces`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `sale_items`
 --
 ALTER TABLE `sale_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+
+--
+-- AUTO_INCREMENT for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -2390,13 +2904,49 @@ ALTER TABLE `seller_bank_accounts`
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `service_categories`
+--
+ALTER TABLE `service_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `service_dynamic_forms`
+--
+ALTER TABLE `service_dynamic_forms`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `service_fields`
+--
+ALTER TABLE `service_fields`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `service_field_values`
+--
+ALTER TABLE `service_field_values`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `service_sales`
+--
+ALTER TABLE `service_sales`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `service_sale_items`
+--
+ALTER TABLE `service_sale_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `units`
 --
 ALTER TABLE `units`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -2407,6 +2957,12 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD CONSTRAINT `accounts_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `bank_accounts`
@@ -2453,6 +3009,19 @@ ALTER TABLE `invoice_items`
   ADD CONSTRAINT `invoice_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `journal_entries`
+--
+ALTER TABLE `journal_entries`
+  ADD CONSTRAINT `journal_entries_related_invoice_id_foreign` FOREIGN KEY (`related_invoice_id`) REFERENCES `invoices` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entries_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `journal_entry_items`
+--
+ALTER TABLE `journal_entry_items`
+  ADD CONSTRAINT `journal_entry_items_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `products`
 --
 ALTER TABLE `products`
@@ -2460,13 +3029,18 @@ ALTER TABLE `products`
   ADD CONSTRAINT `products_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `product_shareholder`
+--
+ALTER TABLE `product_shareholder`
+  ADD CONSTRAINT `product_shareholder_person_id_foreign` FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `product_shareholder_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `sales`
 --
 ALTER TABLE `sales`
-  ADD CONSTRAINT `sales_currency_id_foreign` FOREIGN KEY (`currency_id`) REFERENCES `currencies` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `sales_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `persons` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `sales_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `sales_seller_id_foreign` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `sales_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `persons` (`id`),
+  ADD CONSTRAINT `sales_seller_id_foreign` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`);
 
 --
 -- Constraints for table `sale_items`
@@ -2476,16 +3050,37 @@ ALTER TABLE `sale_items`
   ADD CONSTRAINT `sale_items_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD CONSTRAINT `sale_returns_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_returns_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `seller_bank_accounts`
 --
 ALTER TABLE `seller_bank_accounts`
   ADD CONSTRAINT `seller_bank_accounts_seller_id_foreign` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `services`
+-- Constraints for table `service_fields`
 --
-ALTER TABLE `services`
-  ADD CONSTRAINT `services_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL;
+ALTER TABLE `service_fields`
+  ADD CONSTRAINT `service_fields_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `service_field_values`
+--
+ALTER TABLE `service_field_values`
+  ADD CONSTRAINT `service_field_values_service_field_id_foreign` FOREIGN KEY (`service_field_id`) REFERENCES `service_fields` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `service_field_values_service_sale_item_id_foreign` FOREIGN KEY (`service_sale_item_id`) REFERENCES `service_sale_items` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `service_sale_items`
+--
+ALTER TABLE `service_sale_items`
+  ADD CONSTRAINT `service_sale_items_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `service_sale_items_service_sale_id_foreign` FOREIGN KEY (`service_sale_id`) REFERENCES `service_sales` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

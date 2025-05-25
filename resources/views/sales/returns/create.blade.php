@@ -8,7 +8,9 @@
 
 @section('content')
 <div class="container return-page-rtl">
-    <h2 class="mb-4 text-primary text-center fw-bold">ثبت مرجوعی فروش</h2>
+    <h2 class="mb-4 text-primary text-center fw-bold">
+        برگشت از فروش
+    </h2>
     <form method="POST" action="{{ route('returns.store') }}" id="returnForm" class="needs-validation" novalidate>
         @csrf
         <div class="row g-3 align-items-center mb-2">
@@ -20,31 +22,33 @@
             </div>
         </div>
 
-        <!-- فیلتر و جستجو -->
+        {{-- جدول فاکتورهای فروش --}}
         <div class="row g-2 mb-4 align-items-end">
             <div class="col-md-3 col-12">
-                <label class="form-label">فیلتر جستجو</label>
+                <label class="form-label">فیلتر فاکتورها</label>
                 <select class="form-select" id="filter_field">
-                    <option value="all">همه موارد</option>
+                    <option value="all">همه</option>
                     <option value="invoice_number">شماره فاکتور</option>
-                    <option value="buyer">نام خریدار</option>
-                    <option value="seller">نام فروشنده</option>
-                    <option value="created_at">تاریخ</option>
-                    <option value="final_amount">مبلغ کل</option>
+                    <option value="buyer">خریدار</option>
+                    <option value="seller">فروشنده</option>
+                    <option value="created_at">ایجاد شده در</option>
+                    <option value="final_amount">مبلغ نهایی</option>
                 </select>
             </div>
             <div class="col-md-5 col-12">
                 <label class="form-label">جستجو</label>
-                <input type="text" id="sale_search" class="form-control" placeholder="عبارت موردنظر را وارد کنید...">
+                <input type="text" id="sale_search" class="form-control" placeholder="شماره فاکتور، خریدار، فروشنده، مبلغ ..." autocomplete="off">
             </div>
             <div class="col-md-2 col-8">
-                <button type="button" id="btn_refresh" class="btn btn-outline-primary w-100"><i class="fa fa-sync"></i> رفرش</button>
+                <button type="button" id="btn_refresh" class="btn btn-outline-primary w-100"><i class="fa fa-sync"></i> بروزرسانی</button>
             </div>
         </div>
 
-        <!-- جدول فاکتورها (دکمه سمت راست) -->
+        {{-- جدول لیست فاکتورها --}}
         <div class="mb-4">
-            <h5 class="text-primary fw-bold mb-3">لیست ۱۰ فاکتور آخر</h5>
+            <h5 class="text-primary fw-bold mb-3">
+                لیست فاکتورهای فروش
+            </h5>
             <div class="table-responsive return-table-shadow">
                 <table class="table table-bordered align-middle text-center" id="sales_table">
                     <thead class="table-light">
@@ -54,49 +58,39 @@
                             <th>تاریخ</th>
                             <th>خریدار</th>
                             <th>فروشنده</th>
-                            <th>مبلغ کل</th>
+                            <th>مبلغ نهایی</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="6" class="text-center">در حال بارگذاری...</td></tr>
+                        {{-- این قسمت با جاوااسکریپت پر می‌شود --}}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div id="selected_sale_info" style="display:none;">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white fw-bold">
-                    اطلاعات فاکتور انتخاب‌شده
-                </div>
-                <div class="card-body">
-                    <input type="hidden" name="sale_id" id="sale_id">
-                    <div class="row g-1 mb-2">
-                        <div class="col-6 col-md-3"><b>شماره فاکتور:</b> <span id="info_invoice_number"></span></div>
-                        <div class="col-6 col-md-3"><b>تاریخ:</b> <span id="info_created_at"></span></div>
-                        <div class="col-6 col-md-3"><b>خریدار:</b> <span id="info_buyer"></span></div>
-                        <div class="col-6 col-md-3"><b>فروشنده:</b> <span id="info_seller"></span></div>
-                    </div>
-                    <div class="mb-2"><b>مبلغ کل:</b> <span id="info_final_amount"></span> ریال</div>
-                    <div id="items_table_wrapper"></div>
-                </div>
+        {{-- اطلاعات فاکتور انتخاب شده --}}
+        <div id="selected_sale_info" style="display:none">
+            <div class="alert alert-info mb-3">
+                <strong>فاکتور انتخاب شده:</strong>
+                <span>شماره: <span id="info_invoice_number"></span></span> |
+                <span>تاریخ: <span id="info_created_at"></span></span> |
+                <span>خریدار: <span id="info_buyer"></span></span> |
+                <span>فروشنده: <span id="info_seller"></span></span> |
+                <span>مبلغ: <span id="info_final_amount"></span></span>
             </div>
+            <input type="hidden" id="sale_id" name="sale_id" value="">
         </div>
 
-        <div class="row g-2 mb-3">
-            <div class="col-md-6">
-                <label class="form-label">دلیل مرجوعی کل فاکتور (اختیاری)</label>
-                <input type="text" name="reason" class="form-control" value="{{ old('reason') }}">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">توضیحات کلی (اختیاری)</label>
-                <textarea name="description" class="form-control">{{ old('description') }}</textarea>
-            </div>
+        {{-- جدول آیتم‌های مرجوعی که با جاوااسکریپت بعد از انتخاب فاکتور پر می‌شود --}}
+        <div id="items_table_wrapper"></div>
+
+        {{-- می‌توانید اینجا فیلدهای اضافی مثل توضیحات و... اضافه کنید --}}
+        <div class="mb-3">
+            <label class="form-label">توضیحات (اختیاری)</label>
+            <textarea name="note" class="form-control" rows="2">{{ old('note') }}</textarea>
         </div>
 
-        <div class="d-grid mt-4">
-            <button type="submit" class="btn btn-success btn-lg fw-bold"><i class="fa fa-save"></i> ثبت مرجوعی</button>
-        </div>
+        <button class="btn btn-primary" type="submit">ثبت مرجوعی</button>
     </form>
 </div>
 @endsection

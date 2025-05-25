@@ -9,11 +9,11 @@ class Customer extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'email'];
+    protected $fillable = ['id', 'name', 'email'];
 
-    // فرض می‌کنیم کلید customers.id همان persons.id است، در غیر این صورت فیلد درست را جایگزین کن
     public function person()
     {
+        // فرض: ستون id در customers و persons یکی است
         return $this->belongsTo(Person::class, 'id', 'id');
     }
 }

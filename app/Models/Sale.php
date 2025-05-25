@@ -12,51 +12,10 @@ class Sale extends Model
 
     protected $fillable = [
         'invoice_number',
-        'reference',
         'customer_id',
         'seller_id',
-        'currency_id',
-        'title',
-        'issued_at',
-        'total_price',
-        'discount',
-        'tax',
         'final_amount',
-        'paid_amount',
-        'remaining_amount',
-        'status',
-        'payment_status',
-        'paid_at',
-        'payment_method',
-        'payment_reference',
-        'cancellation_reason',
-        // فیلدهای پرداخت نقدی
-        'cash_amount',
-        'cash_reference',
-        'cash_paid_at',
-        // فیلدهای پرداخت کارت به کارت
-        'card_amount',
-        'card_reference',
-        'card_number',
-        'card_bank',
-        'card_paid_at',
-        // فیلدهای پرداخت POS
-        'pos_amount',
-        'pos_reference',
-        'pos_terminal',
-        'pos_paid_at',
-        // فیلدهای پرداخت آنلاین
-        'online_amount',
-        'online_reference',
-        'online_transaction_id',
-        'online_paid_at',
-        // فیلدهای چک
-        'cheque_amount',
-        'cheque_number',
-        'cheque_bank',
-        'cheque_due_date',
-        'cheque_status',
-        'cheque_received_at'
+        'created_at',
     ];
 
     protected $casts = [
@@ -83,22 +42,27 @@ class Sale extends Model
 
     protected $appends = ['formatted_date', 'payment_status'];
 
+
+
+    // ارتباط صحیح با مشتری (خریدار)
+    public function buyer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
     public function seller()
     {
         return $this->belongsTo(Seller::class, 'seller_id');
     }
 
-    // ارتباط صحیح با مشتری (خریدار)
-    public function buyer()
+    public function items()
     {
-        // مهم: باید به customer_id وصل شود چون جدول فاکتورها با این فیلد است نه buyer_id
-        return $this->belongsTo(Customer::class, 'customer_id');
+        return $this->hasMany(SaleItem::class, 'sale_id');
     }
-
     // ارتباط با مدل Person (در صورت نیاز در جای دیگر پروژه)
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     public function currency()
@@ -106,10 +70,7 @@ class Sale extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function items()
-    {
-        return $this->hasMany(SaleItem::class, 'sale_id');
-    }
+
 
     public function getFormattedDateAttribute()
     {

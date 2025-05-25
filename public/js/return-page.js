@@ -165,22 +165,18 @@ document.getElementById('sale_search').addEventListener('input', function () {
 });
 document.getElementById('btn_refresh').addEventListener('click', loadSalesTable);
 
-    window.selectSaleAjax = function (saleId) {
-        fetch(`/api/invoices/${saleId}`)
-            .then(res => res.json())
-            .then(sale => {
-                document.getElementById('selected_sale_info').style.display = 'block';
-                document.getElementById('sale_id').value = sale.id;
-                document.getElementById('info_invoice_number').innerText = toPersianDigits(sale.invoice_number);
-                document.getElementById('info_created_at').innerText = sale.created_at;
-                // رفع مشکل: اگر sale.buyer مقدار داشت نمایش بده وگرنه بنویس نامشخص
-                document.getElementById('info_buyer').innerText = sale.buyer && sale.buyer !== '-' ? sale.buyer : 'نامشخص';
-                document.getElementById('info_seller').innerText = sale.seller;
-                document.getElementById('info_final_amount').innerText = toPersianDigits(sale.final_amount);
-
-                if (sale.items) {
-                    document.getElementById('items_table_wrapper').innerHTML = renderItemsTable(sale.items);
-                }
-            });
-    };
+window.selectSaleAjax = function (saleId) {
+    fetch(`/api/invoices/${saleId}`)
+        .then(res => res.json())
+        .then(sale => {
+            document.getElementById('selected_sale_info').style.display = 'block';
+            document.getElementById('sale_id').value = sale.id;
+            document.getElementById('info_invoice_number').innerText = toPersianDigits(sale.invoice_number);
+            document.getElementById('info_created_at').innerText = sale.created_at;
+            document.getElementById('info_buyer').innerText = sale.buyer;
+            document.getElementById('info_seller').innerText = sale.seller;
+            document.getElementById('info_final_amount').innerText = toPersianDigits(sale.final_amount);
+            document.getElementById('items_table_wrapper').innerHTML = renderItemsTable(sale.items);
+        });
+};
 });

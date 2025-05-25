@@ -7,10 +7,9 @@ use App\Models\Sale;
 
 class SaleAjaxController extends Controller
 {
-    // متد لیست آخرین فروش‌ها
+    // لیست فاکتورها
     public function latest(Request $request)
     {
-        // گرفتن لیست آخرین فروش‌ها همراه با شخص و فروشنده
         $sales = Sale::with(['person', 'seller'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -24,7 +23,7 @@ class SaleAjaxController extends Controller
             return [
                 'id' => $sale->id,
                 'invoice_number' => $sale->invoice_number,
-                'created_at' => \Morilog\Jalali\Jalalian::fromDateTime($sale->created_at)->format('Y/m/d'),
+                'created_at' => jdate($sale->created_at)->format('Y/m/d'),
                 'buyer' => $buyerFullName,
                 'seller' => $sale->seller ? $sale->seller->first_name . ' ' . $sale->seller->last_name : '',
                 'final_amount' => number_format($sale->final_amount),
@@ -34,7 +33,7 @@ class SaleAjaxController extends Controller
         return response()->json($result);
     }
 
-    // متد نمایش جزییات یک فاکتور
+    // نمایش جزئیات یک فاکتور
     public function show($id)
     {
         $sale = Sale::with(['person', 'seller', 'items'])->findOrFail($id);
@@ -51,11 +50,53 @@ class SaleAjaxController extends Controller
         return response()->json([
             'id' => $sale->id,
             'invoice_number' => $sale->invoice_number,
-            'created_at' => \Morilog\Jalali\Jalalian::fromDateTime($sale->created_at)->format('Y/m/d'),
+            'created_at' => jdate($sale->created_at)->format('Y/m/d'),
             'buyer' => $buyerFullName,
             'seller' => $sellerFullName,
             'final_amount' => number_format($sale->final_amount),
             'items' => $items,
         ]);
+    }
+
+    // ذخیره فاکتور جدید
+    public function store(Request $request)
+    {
+        $request->validate([
+            'invoice_number' => 'required',
+            'customer_id' => 'required|exists:persons,id',
+            'seller_id' => 'required|exists:sellers,id',
+            'final_amount' => 'required|numeric',
+        ]);
+
+        $sale = Sale::create([
+            'invoice_number' => $request->invoice_number,
+            'customer_id'   => $request->customer_id, // مهم!
+            'seller_id'     => $request->seller_id,
+            'final_amount'  => $request->final_amount,
+            'created_at'    => now(),
+        ]);
+
+        return response()->json(['success' => true, 'sale_id' => $sale->id]);
+    }
+
+    // ویرایش فاکتور
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'invoice_number' => 'required',
+            'customer_id' => 'required|exists:persons,id',
+            'seller_id' => 'required|exists:sellers,id',
+            'final_amount' => 'required|numeric',
+        ]);
+
+        $sale = Sale::findOrFail($id);
+        $sale->update([
+            'invoice_number' => $request->invoice_number,
+            'customer_id'   => $request->customer_id, // مهم!
+            'seller_id'     => $request->seller_id,
+            'final_amount'  => $request->final_amount,
+        ]);
+
+        return response()->json(['success' => true]);
     }
 }

@@ -36,6 +36,11 @@ use App\Http\Controllers\Api\ServiceApiController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\BackupController;
 
+
+Route::get('/sales/latest', [SaleAjaxController::class, 'latest']);
+Route::get('/invoices/{id}', [SaleAjaxController::class, 'show']);
+Route::post('/invoices', [SaleAjaxController::class, 'store']);
+Route::put('/invoices/{id}', [SaleAjaxController::class, 'update']);
 Route::get('/api/sales/latest', [\App\Http\Controllers\SaleAjaxController::class, 'latest'])->name('sales.ajax.latest');
 
 Route::middleware(['auth'])->group(function() {

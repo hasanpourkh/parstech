@@ -12,10 +12,51 @@ class Sale extends Model
 
     protected $fillable = [
         'invoice_number',
+        'reference',
         'customer_id',
         'seller_id',
+        'currency_id',
+        'title',
+        'issued_at',
+        'total_price',
+        'discount',
+        'tax',
         'final_amount',
-        'created_at',
+        'paid_amount',
+        'remaining_amount',
+        'status',
+        'payment_status',
+        'paid_at',
+        'payment_method',
+        'payment_reference',
+        'cancellation_reason',
+        // فیلدهای پرداخت نقدی
+        'cash_amount',
+        'cash_reference',
+        'cash_paid_at',
+        // فیلدهای پرداخت کارت به کارت
+        'card_amount',
+        'card_reference',
+        'card_number',
+        'card_bank',
+        'card_paid_at',
+        // فیلدهای پرداخت POS
+        'pos_amount',
+        'pos_reference',
+        'pos_terminal',
+        'pos_paid_at',
+        // فیلدهای پرداخت آنلاین
+        'online_amount',
+        'online_reference',
+        'online_transaction_id',
+        'online_paid_at',
+        // فیلدهای چک
+        'cheque_amount',
+        'cheque_number',
+        'cheque_bank',
+        'cheque_due_date',
+        'cheque_status',
+        'cheque_received_at'
     ];
 
     protected $casts = [
@@ -41,6 +82,7 @@ class Sale extends Model
     ];
 
     protected $appends = ['formatted_date', 'payment_status'];
+
 
     public function person()
     {

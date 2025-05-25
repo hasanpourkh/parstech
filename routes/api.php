@@ -2,7 +2,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Models\Person;
 use Illuminate\Http\Request;
-
+use App\Http\Controllers\SaleAjaxController;
 
 Route::get('/categories/list', [CategoryController::class, 'list']);
 Route::get('/customers/search', function(Request $request) {
@@ -14,3 +14,5 @@ Route::get('/customers/search', function(Request $request) {
         ->get(['id', 'name']);
     return response()->json($results);
 });
+Route::get('/sales/latest', [SaleAjaxController::class, 'latest']);
+Route::get('/invoices/{id}', [SaleAjaxController::class, 'show']);

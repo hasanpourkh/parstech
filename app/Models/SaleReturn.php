@@ -2,21 +2,29 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SaleReturn extends Model
 {
-    protected $fillable = [
-        'return_number', 'sale_id', 'reason', 'description', 'user_id', 'returned_at'
-    ];
+    use HasFactory;
 
-    public function sale()
-    {
-        return $this->belongsTo(Sale::class);
-    }
+    protected $fillable = [
+        'number', 'reference', 'sale_id', 'customer_id', 'date', 'due_date', 'total_amount', 'note'
+    ];
 
     public function items()
     {
         return $this->hasMany(SaleReturnItem::class, 'sale_return_id');
+    }
+
+    public function sale()
+    {
+        return $this->belongsTo(Sale::class, 'sale_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Person::class, 'customer_id', 'id');
     }
 }

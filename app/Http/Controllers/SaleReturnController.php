@@ -11,6 +11,16 @@ use Illuminate\Support\Facades\DB;
 
 class SaleReturnController extends Controller
 {
+    public function create()
+    {
+        // اینجا می‌توانی لیست فاکتورهای فروش، مشتریان و ... را به ویو بفرستی
+        $sales = Sale::all();
+        $customers = Person::all();
+
+        // فرض بر این است که ویوی ساخت مرجوعی sales.returns.create است
+        return view('sales.returns.create', compact('sales', 'customers'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([

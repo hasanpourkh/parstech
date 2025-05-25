@@ -14,5 +14,10 @@ Route::get('/customers/search', function(Request $request) {
         ->get(['id', 'name']);
     return response()->json($results);
 });
+
 Route::get('/sales/latest', [SaleAjaxController::class, 'latest']);
 Route::get('/invoices/{id}', [SaleAjaxController::class, 'show']);
+Route::post('/invoices', [SaleAjaxController::class, 'store']);
+Route::put('/invoices/{id}', [SaleAjaxController::class, 'update']);
+
+

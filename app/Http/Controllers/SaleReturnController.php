@@ -13,7 +13,11 @@ class SaleReturnController extends Controller
     public function create()
     {
         $nextReturnNumber = 'RET' . str_pad(SaleReturn::max('id') + 1, 5, '0', STR_PAD_LEFT);
-        return view('sales.returns.create', compact('nextReturnNumber'));
+
+        // گرفتن همه فاکتورها با اطلاعات خریدار و فروشنده و آیتم‌ها
+        $sales = Sale::with(['buyer', 'seller', 'items.product'])->orderBy('created_at', 'desc')->get();
+
+        return view('sales.returns.create', compact('nextReturnNumber', 'sales'));
     }
 
     public function store(Request $request)

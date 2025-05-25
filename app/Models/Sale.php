@@ -85,7 +85,7 @@ class Sale extends Model
 
     public function seller()
     {
-        return $this->belongsTo(Seller::class);
+        return $this->belongsTo(Seller::class, 'seller_id');
     }
 
     public function customer()
@@ -218,4 +218,16 @@ class Sale extends Model
             }
         });
     }
+        // این متد را اضافه کن:
+        public function buyer()
+        {
+            return $this->belongsTo(Customer::class, 'buyer_id');
+        }
+
+
+        // اگر items هم لازم است:
+        public function items()
+        {
+            return $this->hasMany(SaleItem::class, 'sale_id');
+        }
 }

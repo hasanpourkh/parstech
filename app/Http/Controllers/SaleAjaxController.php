@@ -9,12 +9,17 @@ class SaleAjaxController extends Controller
 {
     public function latest(Request $request)
     {
-        $sales = Sale::with(['customer.person', 'seller'])->orderBy('created_at', 'desc')->limit(10)->get();
+        // دقت کن with('person') باید باشد نه با customers
+        $sales = Sale::with(['person', 'seller'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
 
         $result = $sales->map(function($sale){
+            // مستقیماً person را چک کن
             $buyerFullName = 'نامشخص';
-            if ($sale->customer && $sale->customer->person) {
-                $buyerFullName = $sale->customer->person->full_name;
+            if ($sale->person) {
+                $buyerFullName = $sale->person->full_name;
             }
             return [
                 'id' => $sale->id,

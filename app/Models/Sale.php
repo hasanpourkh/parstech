@@ -42,7 +42,10 @@ class Sale extends Model
 
     protected $appends = ['formatted_date', 'payment_status'];
 
-
+    public function person()
+    {
+        return $this->belongsTo(Person::class, 'customer_id', 'id');
+    }
 
     // ارتباط صحیح با مشتری (خریدار)
     public function buyer()

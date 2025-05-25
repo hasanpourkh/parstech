@@ -655,21 +655,23 @@ public function ajaxSearch(Request $request)
 }
 public function ajaxShow(\App\Models\Sale $sale)
 {
-    $sale->load('items.product', 'buyer', 'seller');
+    $sale->load('items.product', 'items.service', 'buyer', 'seller');
     return response()->json([
         'id' => $sale->id,
         'invoice_number' => $sale->invoice_number,
         'buyer' => optional($sale->buyer)->name ?? '-',
         'seller' => optional($sale->seller)->first_name . ' ' . optional($sale->seller)->last_name,
-        'final_amount' => $sale->final_amount,
+        'final_amount' => number_format($sale->final_amount),
         'created_at' => jdate($sale->created_at)->format('Y/m/d'),
         'items' => $sale->items->map(function($item){
             return [
                 'id' => $item->id,
-                'name' => $item->product ? $item->product->name : '',
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'total' => $item->total,
+                'name' => $item->product ? $item->product->name : ($item->service ? $item->service->name : '-'),
+                'qty' => $item->quantity,
+                'unit_price' => number_format($item->unit_price),
+                'total' => number_format($item->total),
+                'is_product' => $item->product_id ? true : false,
+                'is_service' => $item->service_id ? true : false,
             ];
         }),
     ]);

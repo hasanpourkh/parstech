@@ -1,18 +1,29 @@
 @extends('layouts.app')
 
+@section('head')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/return-page.css') }}">
+@endsection
+
 @section('content')
-<div class="container">
-    <h2>ثبت مرجوعی فروش</h2>
-    <form method="POST" action="{{ route('returns.store') }}">
+<div class="container return-page-rtl">
+    <h2 class="mb-4 text-primary text-center fw-bold">ثبت مرجوعی فروش</h2>
+    <form method="POST" action="{{ route('returns.store') }}" id="returnForm" class="needs-validation" novalidate>
         @csrf
-        <div class="mb-3">
-            <label>شماره مرجوعی</label>
-            <input type="text" name="return_number" class="form-control" value="{{ old('return_number', $nextReturnNumber ?? '') }}" readonly>
+        <div class="row g-3 align-items-center mb-2">
+            <div class="col-md-2 col-sm-5">
+                <label class="form-label fw-bold">شماره مرجوعی</label>
+            </div>
+            <div class="col-md-4 col-sm-7">
+                <input type="text" name="return_number" class="form-control" value="{{ old('return_number', $nextReturnNumber ?? '') }}" readonly>
+            </div>
         </div>
 
         <!-- فیلتر و جستجو -->
-        <div class="row mb-3">
-            <div class="col-md-3">
+        <div class="row g-2 mb-4 align-items-end">
+            <div class="col-md-3 col-12">
+                <label class="form-label">فیلتر جستجو</label>
                 <select class="form-select" id="filter_field">
                     <option value="all">همه موارد</option>
                     <option value="invoice_number">شماره فاکتور</option>
@@ -22,27 +33,28 @@
                     <option value="final_amount">مبلغ کل</option>
                 </select>
             </div>
-            <div class="col-md-5">
-                <input type="text" id="sale_search" class="form-control" placeholder="جستجو...">
+            <div class="col-md-5 col-12">
+                <label class="form-label">جستجو</label>
+                <input type="text" id="sale_search" class="form-control" placeholder="عبارت موردنظر را وارد کنید...">
             </div>
-            <div class="col-md-2">
-                <button type="button" id="btn_refresh" class="btn btn-secondary">رفرش</button>
+            <div class="col-md-2 col-8">
+                <button type="button" id="btn_refresh" class="btn btn-outline-primary w-100"><i class="fa fa-sync"></i> رفرش</button>
             </div>
         </div>
 
-        <!-- جدول ایجکسی فاکتورها -->
-        <div class="mb-3">
-            <h5>لیست ۱۰ فاکتور آخر</h5>
-            <div style="max-height: 350px; overflow-y: auto;">
-                <table class="table table-bordered" id="sales_table">
-                    <thead>
+        <!-- جدول فاکتورها (دکمه سمت راست) -->
+        <div class="mb-4">
+            <h5 class="text-primary fw-bold mb-3">لیست ۱۰ فاکتور آخر</h5>
+            <div class="table-responsive return-table-shadow">
+                <table class="table table-bordered align-middle text-center" id="sales_table">
+                    <thead class="table-light">
                         <tr>
+                            <th>انتخاب</th>
                             <th>شماره فاکتور</th>
                             <th>تاریخ</th>
                             <th>خریدار</th>
                             <th>فروشنده</th>
                             <th>مبلغ کل</th>
-                            <th>انتخاب</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,93 +64,43 @@
             </div>
         </div>
 
-        <!-- نمایش اطلاعات فاکتور انتخاب‌شده -->
         <div id="selected_sale_info" style="display:none;">
-            <h5>اطلاعات فاکتور انتخاب‌شده</h5>
-            <div class="card">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white fw-bold">
+                    اطلاعات فاکتور انتخاب‌شده
+                </div>
                 <div class="card-body">
                     <input type="hidden" name="sale_id" id="sale_id">
-                    <p><b>شماره فاکتور:</b> <span id="info_invoice_number"></span></p>
-                    <p><b>تاریخ:</b> <span id="info_created_at"></span></p>
-                    <p><b>خریدار:</b> <span id="info_buyer"></span></p>
-                    <p><b>فروشنده:</b> <span id="info_seller"></span></p>
-                    <p><b>مبلغ کل:</b> <span id="info_final_amount"></span> ریال</p>
-                    <!-- اینجا بعداً جدول محصولات و خدمات را نمایش می‌دهیم -->
+                    <div class="row g-1 mb-2">
+                        <div class="col-6 col-md-3"><b>شماره فاکتور:</b> <span id="info_invoice_number"></span></div>
+                        <div class="col-6 col-md-3"><b>تاریخ:</b> <span id="info_created_at"></span></div>
+                        <div class="col-6 col-md-3"><b>خریدار:</b> <span id="info_buyer"></span></div>
+                        <div class="col-6 col-md-3"><b>فروشنده:</b> <span id="info_seller"></span></div>
+                    </div>
+                    <div class="mb-2"><b>مبلغ کل:</b> <span id="info_final_amount"></span> ریال</div>
+                    <div id="items_table_wrapper"></div>
                 </div>
             </div>
         </div>
 
-        <div class="mb-3 mt-3">
-            <label>دلیل مرجوعی</label>
-            <input type="text" name="reason" class="form-control" value="{{ old('reason') }}">
-        </div>
-        <div class="mb-3">
-            <label>توضیحات</label>
-            <textarea name="description" class="form-control">{{ old('description') }}</textarea>
+        <div class="row g-2 mb-3">
+            <div class="col-md-6">
+                <label class="form-label">دلیل مرجوعی کل فاکتور (اختیاری)</label>
+                <input type="text" name="reason" class="form-control" value="{{ old('reason') }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">توضیحات کلی (اختیاری)</label>
+                <textarea name="description" class="form-control">{{ old('description') }}</textarea>
+            </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">ثبت مرجوعی</button>
+        <div class="d-grid mt-4">
+            <button type="submit" class="btn btn-success btn-lg fw-bold"><i class="fa fa-save"></i> ثبت مرجوعی</button>
+        </div>
     </form>
 </div>
 @endsection
 
 @section('scripts')
-<script>
-function renderSalesTable(sales) {
-    let tbody = '';
-    if(sales.length === 0) {
-        tbody = '<tr><td colspan="6" class="text-center">فاکتوری یافت نشد.</td></tr>';
-    } else {
-        sales.forEach(function(sale){
-            tbody += `<tr>
-                <td>${sale.invoice_number}</td>
-                <td>${sale.created_at}</td>
-                <td>${sale.buyer}</td>
-                <td>${sale.seller}</td>
-                <td>${sale.final_amount}</td>
-                <td>
-                    <button type="button" class="btn btn-success btn-sm" onclick="selectSaleAjax(${sale.id})"><i class="fa fa-plus"></i></button>
-                </td>
-            </tr>`;
-        });
-    }
-    document.querySelector('#sales_table tbody').innerHTML = tbody;
-}
-
-// لود اولیه
-function loadSalesTable() {
-    let filter = document.getElementById('filter_field').value;
-    let search = document.getElementById('sale_search').value;
-    document.querySelector('#sales_table tbody').innerHTML = '<tr><td colspan="6" class="text-center">در حال بارگذاری...</td></tr>';
-    fetch(`/api/sales/latest?filter=${encodeURIComponent(filter)}&search=${encodeURIComponent(search)}`)
-        .then(res => res.json())
-        .then(data => renderSalesTable(data));
-}
-loadSalesTable();
-
-// حتماً با تغییر فیلتر یا جستجو جدول آپدیت شود
-document.getElementById('filter_field').addEventListener('change', loadSalesTable);
-document.getElementById('sale_search').addEventListener('input', function() {
-    // با هر تایپ یک ثانیه صبر کن بعد سرچ کن (برای کارایی بیشتر)
-    clearTimeout(window.saleSearchTimeout);
-    window.saleSearchTimeout = setTimeout(loadSalesTable, 500);
-});
-document.getElementById('btn_refresh').addEventListener('click', loadSalesTable);
-
-// انتخاب فاکتور با ایجکس و نمایش اطلاعاتش پایین صفحه
-window.selectSaleAjax = function(saleId) {
-    fetch(`/api/invoices/${saleId}`)
-        .then(res => res.json())
-        .then(sale => {
-            document.getElementById('selected_sale_info').style.display = 'block';
-            document.getElementById('sale_id').value = sale.id;
-            document.getElementById('info_invoice_number').innerText = sale.invoice_number;
-            document.getElementById('info_created_at').innerText = sale.created_at;
-            document.getElementById('info_buyer').innerText = sale.buyer;
-            document.getElementById('info_seller').innerText = sale.seller;
-            document.getElementById('info_final_amount').innerText = sale.final_amount;
-            // اینجا بعداً جدول محصولات و خدمات را نمایش می‌دهیم
-        });
-};
-</script>
+    <script src="{{ asset('js/return-page.js') }}"></script>
 @endsection

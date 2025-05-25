@@ -81,7 +81,6 @@ class Sale extends Model
         'cheque_amount' => 'integer'
     ];
 
-
     protected $appends = ['formatted_date', 'payment_status'];
 
     public function seller()
@@ -89,6 +88,14 @@ class Sale extends Model
         return $this->belongsTo(Seller::class, 'seller_id');
     }
 
+    // ارتباط صحیح با مشتری (خریدار)
+    public function buyer()
+    {
+        // مهم: باید به customer_id وصل شود چون جدول فاکتورها با این فیلد است نه buyer_id
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    // ارتباط با مدل Person (در صورت نیاز در جای دیگر پروژه)
     public function customer()
     {
         return $this->belongsTo(Person::class, 'customer_id');
@@ -219,13 +226,4 @@ class Sale extends Model
             }
         });
     }
-        // این متد را اضافه کن:
-        public function buyer()
-        {
-            return $this->belongsTo(Customer::class, 'buyer_id');
-        }
-
-
-        // اگر items هم لازم است:
-
 }

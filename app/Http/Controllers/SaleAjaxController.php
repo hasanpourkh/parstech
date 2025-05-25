@@ -12,6 +12,7 @@ class SaleAjaxController extends Controller
         $filterField = $request->get('filter', 'all');
         $search = $request->get('search', '');
 
+        // ارتباط buyer حالا درست کار می‌کند
         $query = Sale::with(['buyer', 'seller'])
             ->orderBy('created_at', 'desc');
 
@@ -46,9 +47,10 @@ class SaleAjaxController extends Controller
             return [
                 'id' => $sale->id,
                 'invoice_number' => $sale->invoice_number,
-                'created_at' => jdate($sale->created_at)->format('Y/m/d H:i'),
+                'created_at' => jdate($sale->created_at)->format('Y/m/d'),
+                // این خط مهم است!
                 'buyer' => optional($sale->buyer)->name ?? 'نامشخص',
-                'seller' => trim(optional($sale->seller)->first_name . ' ' . optional($sale->seller)->last_name),
+                'seller' => optional($sale->seller)->first_name . ' ' . optional($sale->seller)->last_name,
                 'final_amount' => number_format($sale->final_amount),
             ];
         });

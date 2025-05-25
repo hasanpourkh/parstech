@@ -46,7 +46,6 @@
                                 <button type="button" class="btn btn-success btn-sm" onclick="selectSale({{ $sale->id }})">
                                     <i class="fa fa-plus"></i>
                                 </button>
-                                <!-- اطلاعات کامل فاکتور را در یک span مخفی جاسازی می‌کنیم برای استفاده جاوااسکریپت -->
                                 <span id="sale_data_{{ $sale->id }}" style="display:none;">
                                     {!! json_encode([
                                         'id' => $sale->id,
@@ -57,10 +56,13 @@
                                         'final_amount' => number_format($sale->final_amount),
                                         'items' => $sale->items->map(function($item){
                                             return [
-                                                'name' => optional($item->product)->name ?? '-',
+                                                'id' => $item->id,
+                                                'name' => optional($item->product)->name ?? ($item->service_name ?? '-'),
                                                 'qty' => $item->quantity,
                                                 'unit_price' => number_format($item->unit_price),
                                                 'total' => number_format($item->total),
+                                                'is_product' => $item->product_id ? true : false,
+                                                'max_qty' => $item->quantity,
                                             ];
                                         })
                                     ]) !!}
@@ -73,7 +75,7 @@
             </div>
         </div>
 
-        <!-- نمایش اطلاعات کامل فاکتور انتخاب شده -->
+        <!-- نمایش اطلاعات کامل فاکتور انتخاب شده و فرم مرجوعی آیتم‌ها -->
         <div id="selected_sale_info" style="display:none;">
             <h5>اطلاعات فاکتور انتخاب‌شده</h5>
             <div class="card">
@@ -84,14 +86,17 @@
                     <p><b>خریدار:</b> <span id="info_buyer"></span></p>
                     <p><b>فروشنده:</b> <span id="info_seller"></span></p>
                     <p><b>مبلغ کل:</b> <span id="info_final_amount"></span> ریال</p>
-                    <h6>محصولات/خدمات:</h6>
+                    <h6>محصولات/خدمات (انتخاب کنید چه چیزی مرجوع می‌شود):</h6>
                     <table class="table table-sm table-bordered">
                         <thead>
                             <tr>
+                                <th>انتخاب</th>
                                 <th>نام</th>
-                                <th>تعداد</th>
+                                <th>تعداد کل</th>
+                                <th>تعداد مرجوعی</th>
                                 <th>قیمت واحد</th>
                                 <th>جمع</th>
+                                <th>نوع</th>
                             </tr>
                         </thead>
                         <tbody id="info_items_table"></tbody>
@@ -100,7 +105,6 @@
             </div>
         </div>
 
-        <!-- ادامه فرم مرجوعی -->
         <div class="mb-3 mt-3">
             <label>دلیل مرجوعی</label>
             <input type="text" name="reason" class="form-control" value="{{ old('reason') }}">
@@ -117,7 +121,7 @@
 
 @section('scripts')
 <script>
-// فیلتر کردن ردیف‌های جدول بر اساس جستجو
+// فیلتر کردن جدول فاکتورها
 document.getElementById('sale_search').addEventListener('input', function() {
     let q = this.value.trim().toLowerCase();
     let trs = document.querySelectorAll('#sales_table tbody tr');
@@ -132,12 +136,12 @@ document.getElementById('sale_search').addEventListener('input', function() {
     });
 });
 
-// انتخاب یک فاکتور با دکمه مثبت و پر کردن اطلاعات پایین صفحه
+// انتخاب فاکتور و نمایش آیتم‌ها با چک‌باکس و فیلد تعداد
 window.selectSale = function(id) {
     let dataElem = document.getElementById('sale_data_' + id);
     if (!dataElem) return;
     let sale = JSON.parse(dataElem.innerText);
-    // نمایش اطلاعات
+
     document.getElementById('selected_sale_info').style.display = 'block';
     document.getElementById('sale_id').value = sale.id;
     document.getElementById('info_invoice_number').innerText = sale.invoice_number;
@@ -146,17 +150,34 @@ window.selectSale = function(id) {
     document.getElementById('info_seller').innerText = sale.seller;
     document.getElementById('info_final_amount').innerText = sale.final_amount;
 
-    // جدول آیتم‌ها
+    // جدول آیتم‌ها با چک‌باکس و تعداد مرجوعی
     let itemsHtml = '';
-    sale.items.forEach(function(item){
+    sale.items.forEach(function(item, idx){
         itemsHtml += `<tr>
+            <td>
+                <input type="checkbox" name="items[${item.id}][selected]" value="1" id="item_check_${item.id}" onchange="toggleQtyField(${item.id})">
+            </td>
             <td>${item.name}</td>
             <td>${item.qty}</td>
+            <td>
+                <input type="number" name="items[${item.id}][qty]" id="item_qty_${item.id}" min="1" max="${item.max_qty}" value="1" class="form-control form-control-sm" style="width:70px;display:none;">
+            </td>
             <td>${item.unit_price}</td>
             <td>${item.total}</td>
+            <td>${item.is_product ? 'کالا' : 'خدمت'}</td>
         </tr>`;
     });
     document.getElementById('info_items_table').innerHTML = itemsHtml;
+};
+
+window.toggleQtyField = function(itemId) {
+    let check = document.getElementById('item_check_' + itemId);
+    let qty = document.getElementById('item_qty_' + itemId);
+    if (check.checked) {
+        qty.style.display = 'inline-block';
+    } else {
+        qty.style.display = 'none';
+    }
 };
 </script>
 @endsection

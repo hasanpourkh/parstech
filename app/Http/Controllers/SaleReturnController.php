@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Sale;
 use App\Models\SaleReturn;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Product;
 use Carbon\Carbon;
 use DB;
 
@@ -13,10 +15,7 @@ class SaleReturnController extends Controller
     public function create()
     {
         $nextReturnNumber = 'RET' . str_pad(SaleReturn::max('id') + 1, 5, '0', STR_PAD_LEFT);
-
-        // گرفتن همه فاکتورها با اطلاعات خریدار و فروشنده و آیتم‌ها
         $sales = Sale::with(['buyer', 'seller', 'items.product'])->orderBy('created_at', 'desc')->get();
-
         return view('sales.returns.create', compact('nextReturnNumber', 'sales'));
     }
 
@@ -24,43 +23,53 @@ class SaleReturnController extends Controller
     {
         $request->validate([
             'return_number' => 'required|string|max:100|unique:sale_returns,return_number',
+            'sale_id' => 'required|exists:sales,id',
             'reason' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'return_data' => 'required|string',
+            'items' => 'required|array|min:1',
         ]);
 
-        $returnData = json_decode($request->return_data, true);
+        DB::transaction(function() use ($request) {
+            $sale = Sale::findOrFail($request->sale_id);
 
-        DB::transaction(function() use ($request, $returnData) {
-            foreach ($returnData as $saleId => $saleInfo) {
-                $return = SaleReturn::create([
-                    'return_number' => $request->return_number,
-                    'sale_id' => $saleId,
-                    'reason' => $request->reason,
-                    'description' => $request->description,
-                    'user_id' => auth()->id(),
-                    'returned_at' => Carbon::now(),
+            $return = SaleReturn::create([
+                'return_number' => $request->return_number,
+                'sale_id' => $sale->id,
+                'reason' => $request->reason,
+                'description' => $request->description,
+                'user_id' => auth()->id(),
+                'returned_at' => Carbon::now(),
+            ]);
+
+            foreach($request->items as $itemId => $item) {
+                if(empty($item['selected']) || empty($item['qty']) || $item['qty'] <= 0) continue;
+
+                $saleItem = SaleItem::find($itemId);
+                if(!$saleItem) continue;
+
+                $returnQty = min(intval($item['qty']), $saleItem->quantity);
+
+                // ذخیره آیتم مرجوعی
+                $return->items()->create([
+                    'sale_item_id' => $saleItem->id,
+                    'qty' => $returnQty,
+                    'reason' => $item['reason'] ?? null,
                 ]);
-                foreach ($saleInfo['items'] as $itemId => $item) {
-                    // پیدا کردن sale_item
-                    $saleItem = \App\Models\SaleItem::find($itemId);
-                    if(!$saleItem) continue;
 
-                    $qty = $saleItem->quantity;
-                    $return->items()->create([
-                        'sale_item_id' => $saleItem->id,
-                        'qty' => $qty,
-                        'reason' => null,
-                    ]);
-                    // برگرداندن موجودی محصول
-                    if($saleItem->product_id) {
-                        $product = \App\Models\Product::find($saleItem->product_id);
-                        if($product) {
-                            $product->increment('stock', $qty);
-                        }
+                // اگر کالا است، موجودی را اضافه کند
+                if($saleItem->product_id) {
+                    $product = Product::find($saleItem->product_id);
+                    if($product) {
+                        $product->increment('stock', $returnQty);
                     }
-                    $saleItem->decrement('quantity', $qty);
                 }
+
+                // تعداد آیتم را کم کن (چه کالا چه خدمت)
+                $saleItem->decrement('quantity', $returnQty);
+
+                // مبلغ آیتم را از مبلغ نهایی فاکتور کم کن
+                $amountToReduce = $saleItem->unit_price * $returnQty;
+                $sale->decrement('final_amount', $amountToReduce);
             }
         });
 

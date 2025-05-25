@@ -226,8 +226,5 @@ class Sale extends Model
 
 
         // اگر items هم لازم است:
-        public function items()
-        {
-            return $this->hasMany(SaleItem::class, 'sale_id');
-        }
+
 }

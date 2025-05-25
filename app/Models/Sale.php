@@ -98,7 +98,7 @@ class Sale extends Model
     // ارتباط با مدل Person (در صورت نیاز در جای دیگر پروژه)
     public function customer()
     {
-        return $this->belongsTo(Person::class, 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 
     public function currency()

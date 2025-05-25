@@ -32,10 +32,8 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
-        // مقدار پایه برای Query
         $baseQuery = Sale::with(['seller', 'customer', 'items.product', 'currency']);
 
-        // فیلترها
         if ($request->filled('search')) {
             $search = $request->search;
             $baseQuery->where(function($q) use ($search) {
@@ -78,23 +76,17 @@ class SaleController extends Controller
             $baseQuery->where('total_price', '<=', $request->price_max);
         }
 
-        // مرتب‌سازی
         $sortField = $request->sort_by ?? 'created_at';
         $sortOrder = $request->sort_order ?? 'desc';
-
-        // تعداد آیتم در هر صفحه
         $perPage = $request->per_page ?? 10;
 
-        // لیست فروش‌ها با صفحه‌بندی
         $sales = (clone $baseQuery)->orderBy($sortField, $sortOrder)->paginate($perPage)->withQueryString();
 
-        // محاسبه آمارها روی کل رکوردهای فیلترشده
         $totalSales = (clone $baseQuery)->sum('total_price');
         $salesCount = (clone $baseQuery)->count();
         $averageSale = $salesCount > 0 ? $totalSales / $salesCount : 0;
         $todaySales = (clone $baseQuery)->whereDate('created_at', Carbon::today())->sum('total_price');
 
-        // دریافت لیست مشتریان و فروشندگان برای فیلتر
         $customers = Person::whereHas('sales')->get();
         $sellers = Seller::whereHas('sales')->get();
 
@@ -111,13 +103,12 @@ class SaleController extends Controller
 
     public function create()
     {
-        $sellers = \App\Models\Seller::all();
-        $products = \App\Models\Product::with('category')->where('type', 'product')->get();
-        $services = \App\Models\Product::with('category')->where('type', 'service')->get(); // تغییر این خط
-        $currencies = \App\Models\Currency::all();
-        $customers = \App\Models\Person::all();
+        $sellers = Seller::all();
+        $products = Product::with('category')->where('type', 'product')->get();
+        $services = Product::with('category')->where('type', 'service')->get();
+        $currencies = Currency::all();
+        $customers = Person::all();
 
-        // شماره پیشنهادی برای فاکتور جدید
         $nextNumber = $this->generateNextInvoiceNumber();
 
         return view('sales.create', compact(
@@ -133,14 +124,14 @@ class SaleController extends Controller
     public function store(Request $request)
 {
     $request->validate([
-        'customer_id' => 'required|exists:persons,id',
-        'seller_id' => 'required|exists:sellers,id',
-        'currency_id' => 'required|exists:currencies,id',
+        'customer_id'    => 'required|exists:persons,id',
+        'seller_id'      => 'required|exists:sellers,id',
+        'currency_id'    => 'required|exists:currencies,id',
         'products_input' => 'required',
     ], [
-        'customer_id.required' => 'انتخاب مشتری الزامی است.',
-        'seller_id.required' => 'انتخاب فروشنده الزامی است.',
-        'currency_id.required' => 'انتخاب واحد پول الزامی است.',
+        'customer_id.required'    => 'انتخاب مشتری الزامی است.',
+        'seller_id.required'      => 'انتخاب فروشنده الزامی است.',
+        'currency_id.required'    => 'انتخاب واحد پول الزامی است.',
         'products_input.required' => 'حداقل یک محصول یا خدمت به فاکتور اضافه کنید.',
     ]);
 
@@ -156,10 +147,10 @@ class SaleController extends Controller
         $totalTax = 0;
 
         foreach ($items as $item) {
-            $count = intval($item['count']);
-            $unitPrice = intval($item['sell_price']);
-            $discount = floatval($item['discount'] ?? 0);
-            $tax = floatval($item['tax'] ?? 0);
+            $count = isset($item['count']) ? intval($item['count']) : 0;
+            $unitPrice = isset($item['sell_price']) ? intval($item['sell_price']) : 0;
+            $discount = isset($item['discount']) ? floatval($item['discount']) : 0;
+            $tax = isset($item['tax']) ? floatval($item['tax']) : 0;
 
             $subtotal = $count * $unitPrice;
             $itemDiscount = $discount;
@@ -171,7 +162,7 @@ class SaleController extends Controller
 
             $product = Product::find($item['id']);
             if ($product && $product->type === 'product') {
-                if($product->stock < $count) {
+                if ($product->stock < $count) {
                     throw new \Exception("موجودی محصول '{$product->name}' کافی نیست.");
                 }
                 $product->stock -= $count;
@@ -179,52 +170,49 @@ class SaleController extends Controller
             }
         }
 
-        // محاسبه مبلغ نهایی
         $finalAmount = $totalPrice - $totalDiscount + $totalTax;
-
-        // شماره فاکتور اتوماتیک و غیرتکراری
         $invoice_number = $this->generateNextInvoiceNumber();
 
         $sale = Sale::create([
             'invoice_number' => $invoice_number,
-            'reference' => $request->reference,
-            'customer_id' => $request->customer_id,
-            'seller_id' => $request->seller_id,
-            'currency_id' => $request->currency_id,
-            'title' => $request->title,
-            'issued_at' => Carbon::now(),
-            'total_price' => $totalPrice,
-            'discount' => $totalDiscount,
-            'tax' => $totalTax,
-            'final_amount' => $finalAmount,
-            'status' => 'pending'
+            'reference'      => $request->reference,
+            'customer_id'    => $request->customer_id,
+            'seller_id'      => $request->seller_id,
+            'currency_id'    => $request->currency_id,
+            'title'          => $request->title,
+            'issued_at'      => Carbon::now(),
+            'total_price'    => $totalPrice,
+            'discount'       => $totalDiscount,
+            'tax'            => $totalTax,
+            'final_amount'   => $finalAmount,
+            'status'         => 'pending'
         ]);
 
         foreach ($items as $item) {
-            $count = intval($item['count']);
-            $unitPrice = intval($item['sell_price']);
-            $discount = floatval($item['discount'] ?? 0);
-            $tax = floatval($item['tax'] ?? 0);
+            $count = isset($item['count']) ? intval($item['count']) : 0;
+            $unitPrice = isset($item['sell_price']) ? intval($item['sell_price']) : 0;
+            $discount = isset($item['discount']) ? floatval($item['discount']) : 0;
+            $tax = isset($item['tax']) ? floatval($item['tax']) : 0;
 
             $subtotal = $count * $unitPrice;
             $itemDiscount = $discount;
             $itemTax = ($subtotal - $itemDiscount) * ($tax / 100);
             $total = $subtotal - $itemDiscount + $itemTax;
 
+            // مقدار quantity حتما باید وجود داشته باشد
             SaleItem::create([
-                'sale_id' => $sale->id,
-                'product_id' => $item['id'],
+                'sale_id'     => $sale->id,
+                'product_id'  => $item['id'],
+                'quantity'    => $count,
+                'unit_price'  => $unitPrice,
+                'discount'    => $itemDiscount,
+                'tax'         => $itemTax,
+                'total'       => $total,
                 'description' => $item['desc'] ?? '',
-                'unit' => $item['unit'] ?? '',
-                'quantity' => $count,
-                'unit_price' => $unitPrice,
-                'discount' => $itemDiscount,
-                'tax' => $itemTax,
-                'total' => $total
+                'unit'        => $item['unit'] ?? '',
             ]);
         }
 
-        // محاسبه مجدد totals برای اطمینان
         $sale->calculateTotals();
 
         DB::commit();
@@ -676,4 +664,121 @@ public function ajaxShow(\App\Models\Sale $sale)
         }),
     ]);
 }
+
+
+
+    // متد فروش سریع
+
+    public function quickStore(Request $request)
+    {
+        // اگر customer_id وجود ندارد، مشتری حضوری را پیدا یا ایجاد کن
+        if (!$request->has('customer_id') || empty($request->customer_id)) {
+            // مشتری حضوری را پیدا کن یا بساز
+            $customer = Person::firstOrCreate(
+                ['first_name' => 'مشتری', 'last_name' => 'حضوری'],
+                ['mobile' => null]
+            );
+            $customer_id = $customer->id;
+        } else {
+            $customer_id = $request->customer_id;
+        }
+
+        $request->merge(['customer_id' => $customer_id]);
+
+        $request->validate([
+            'seller_id'      => 'required|exists:sellers,id',
+            'currency_id'    => 'required|exists:currencies,id',
+            'products_input' => 'required',
+        ], [
+            'seller_id.required'      => 'انتخاب فروشنده الزامی است.',
+            'currency_id.required'    => 'انتخاب واحد پول الزامی است.',
+            'products_input.required' => 'حداقل یک محصول یا خدمت به فاکتور اضافه کنید.',
+        ]);
+
+        $items = json_decode($request->products_input, true);
+        if (empty($items)) {
+            return back()->withInput()->withErrors(['products' => 'هیچ محصولی انتخاب نشده است.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $totalPrice = 0;
+            $totalDiscount = 0;
+            $totalTax = 0;
+
+            foreach ($items as $item) {
+                $count = isset($item['count']) ? intval($item['count']) : 0;
+                $unitPrice = isset($item['sell_price']) ? intval($item['sell_price']) : 0;
+                $discount = isset($item['discount']) ? floatval($item['discount']) : 0;
+                $tax = isset($item['tax']) ? floatval($item['tax']) : 0;
+
+                $subtotal = $count * $unitPrice;
+                $itemDiscount = $discount;
+                $itemTax = ($subtotal - $itemDiscount) * ($tax / 100);
+
+                $totalPrice += $subtotal;
+                $totalDiscount += $itemDiscount;
+                $totalTax += $itemTax;
+
+                $product = Product::find($item['id']);
+                if ($product && $product->type === 'product') {
+                    if ($product->stock < $count) {
+                        throw new \Exception("موجودی محصول '{$product->name}' کافی نیست.");
+                    }
+                    $product->stock -= $count;
+                    $product->save();
+                }
+            }
+
+            $finalAmount = $totalPrice - $totalDiscount + $totalTax;
+            $invoice_number = $this->generateNextInvoiceNumber();
+
+            $sale = Sale::create([
+                'invoice_number' => $invoice_number,
+                'reference'      => $request->reference,
+                'customer_id'    => $customer_id,
+                'seller_id'      => $request->seller_id,
+                'currency_id'    => $request->currency_id,
+                'title'          => $request->title ?? 'فروش سریع',
+                'issued_at'      => Carbon::now(),
+                'total_price'    => $totalPrice,
+                'discount'       => $totalDiscount,
+                'tax'            => $totalTax,
+                'final_amount'   => $finalAmount,
+                'status'         => 'pending'
+            ]);
+
+            foreach ($items as $item) {
+                $count = isset($item['count']) ? intval($item['count']) : 0;
+                $unitPrice = isset($item['sell_price']) ? intval($item['sell_price']) : 0;
+                $discount = isset($item['discount']) ? floatval($item['discount']) : 0;
+                $tax = isset($item['tax']) ? floatval($item['tax']) : 0;
+
+                $subtotal = $count * $unitPrice;
+                $itemDiscount = $discount;
+                $itemTax = ($subtotal - $itemDiscount) * ($tax / 100);
+                $total = $subtotal - $itemDiscount + $itemTax;
+
+                SaleItem::create([
+                    'sale_id'     => $sale->id,
+                    'product_id'  => $item['id'],
+                    'quantity'    => $count,
+                    'unit_price'  => $unitPrice,
+                    'discount'    => $itemDiscount,
+                    'tax'         => $itemTax,
+                    'total'       => $total,
+                    'description' => $item['desc'] ?? '',
+                    'unit'        => $item['unit'] ?? '',
+                ]);
+            }
+
+            $sale->calculateTotals();
+
+            DB::commit();
+            return redirect()->route('sales.index')->with('success', 'فروش سریع با موفقیت ثبت شد.');
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => $ex->getMessage()]);
+        }
+    }
 }

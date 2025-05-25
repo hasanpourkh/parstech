@@ -9,6 +9,8 @@ class Person extends Model
 {
     use HasFactory;
 
+    protected $table = 'persons';
+
     protected $fillable = [
         'accounting_code', 'type', 'first_name', 'last_name', 'nickname', 'credit_limit', 'price_list', 'tax_type',
         'national_code', 'economic_code', 'registration_number', 'branch_code', 'description', 'address', 'country',
@@ -16,7 +18,7 @@ class Person extends Model
         'birth_date', 'marriage_date', 'join_date', 'company_name', 'title'
     ];
 
-    protected $table = 'persons';
+
 
     protected $appends = ['display_name'];
 
@@ -36,7 +38,7 @@ class Person extends Model
 
     public function getFullNameAttribute()
     {
-        return trim($this->first_name . ' ' . $this->last_name) ?: ($this->company_name ?? $this->nickname ?? 'بدون نام');
+        return trim($this->first_name . ' ' . $this->last_name);
     }
 
     public function bankAccounts()

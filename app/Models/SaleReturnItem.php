@@ -2,24 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SaleReturnItem extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'sale_return_id', 'product_id', 'quantity', 'barcode', 'note'
+        'sale_return_id', 'product_id', 'qty', 'reason', 'item_description', 'barcode', 'is_product'
     ];
 
     public function saleReturn()
     {
-        return $this->belongsTo(SaleReturn::class, 'sale_return_id');
+        return $this->belongsTo(SaleReturn::class);
     }
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class);
     }
 }

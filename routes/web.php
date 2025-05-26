@@ -36,6 +36,33 @@ use App\Http\Controllers\Api\ServiceApiController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\BackupController;
 
+
+
+
+
+
+
+
+
+
+// مسیرهای مرجوعی فروش
+Route::prefix('sales/returns')->name('sale_returns.')->group(function() {
+    Route::get('/', [\App\Http\Controllers\SaleReturnController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\SaleReturnController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\SaleReturnController::class, 'store'])->name('store');
+    Route::get('/{id}', [\App\Http\Controllers\SaleReturnController::class, 'show'])->name('show');
+});
+
+
+Route::get('/returns', [SaleReturnController::class, 'index'])->name('sale_returns.index');
+Route::get('/returns/create', [SaleReturnController::class, 'create'])->name('sale_returns.create');
+Route::post('/returns/store', [SaleReturnController::class, 'store'])->name('sale_returns.store');
+
+
+
+Route::get('/sale-returns', [SaleReturnController::class, 'index'])->name('sale_returns.index');
+
+
 Route::get('/sale-returns/create', [SaleReturnController::class, 'create']);
 Route::post('/sale-returns', [SaleReturnController::class, 'store']);
 

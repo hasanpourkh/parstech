@@ -7,6 +7,21 @@
 @endsection
 
 @section('content')
+@if ($errors->any())
+    <div style="background:red;color:white;padding:10px;">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+@if(session('success'))
+    <div style="background:green;color:white;padding:10px;">
+        {{ session('success') }}
+    </div>
+@endif
 <div class="container return-page-rtl">
     <h2 class="mb-4 text-primary text-center fw-bold">
         برگشت از فروش

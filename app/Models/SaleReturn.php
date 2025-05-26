@@ -7,8 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class SaleReturn extends Model
 {
     protected $fillable = [
-        'sale_id', 'note', 'user_id'
+        'sale_id', 'note', 'user_id', 'return_number'
     ];
+
+    public static function generateReturnNumber()
+    {
+        $prefix = 'RET-' . date('Ymd');
+        $last = static::where('return_number', 'like', $prefix . '%')->orderByDesc('id')->first();
+        $next = $last ? ((int)substr($last->return_number, strlen($prefix))) + 1 : 1;
+        return $prefix . sprintf('%03d', $next);
+    }
 
     public function sale()
     {

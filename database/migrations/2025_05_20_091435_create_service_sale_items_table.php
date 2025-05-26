@@ -10,15 +10,20 @@ return new class extends Migration
     {
         Schema::create('service_sale_items', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('service_sale_id'); // فاکتور فروش
-            $table->unsignedBigInteger('service_id'); // خدمت انتخاب‌شده
-            $table->bigInteger('price')->default(0);
-            $table->integer('quantity')->default(1);
-            $table->text('note')->nullable();
+            $table->unsignedBigInteger('service_sale_id'); // فاکتور فروش خدمت
+            $table->unsignedBigInteger('service_id');      // خدمت انتخاب‌شده
+            $table->bigInteger('price')->default(0);       // مبلغ هر خدمت
+            $table->integer('quantity')->default(1);       // تعداد خدمت
+            $table->text('note')->nullable();              // توضیحات
             $table->timestamps();
 
-            $table->foreign('service_sale_id')->references('id')->on('service_sales')->onDelete('cascade');
-            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('service_sale_id')
+                  ->references('id')->on('service_sales')
+                  ->onDelete('cascade');
+
+            $table->foreign('service_id')
+                  ->references('id')->on('services')
+                  ->onDelete('cascade');
         });
     }
 

@@ -397,23 +397,24 @@ class SaleController extends Controller
 
         DB::beginTransaction();
         try {
-            // مبلغ نهایی (final_amount)
-            $finalAmount = $sale->total_price - $sale->discount + $sale->tax;
+            // مبلغ نهایی (final_amount) با دقت اعشاری
+            $finalAmount = floatval($sale->total_price) - floatval($sale->discount) + floatval($sale->tax);
 
-            // جمع کل پرداخت جدید
-            $totalPaidAmount = $sale->paid_amount ?: 0; // پرداختی‌های قبلی
+            // جمع کل پرداخت قبلی (با دقت اعشاری)
+            $previousPaid = floatval($sale->paid_amount) ?: 0.0;
+            $paidThisTime = 0.0;
 
             switch($request->payment_method) {
                 case 'cash':
-                    $totalPaidAmount += intval($request->cash_amount);
-                    $sale->cash_amount = intval($request->cash_amount);
+                    $paidThisTime = floatval($request->cash_amount);
+                    $sale->cash_amount = $paidThisTime;
                     $sale->cash_reference = $request->cash_reference;
                     $sale->cash_paid_at = now();
                     break;
 
                 case 'card':
-                    $totalPaidAmount += intval($request->card_amount);
-                    $sale->card_amount = intval($request->card_amount);
+                    $paidThisTime = floatval($request->card_amount);
+                    $sale->card_amount = $paidThisTime;
                     $sale->card_number = $request->card_number;
                     $sale->card_bank = $request->card_bank;
                     $sale->card_reference = $request->card_reference;
@@ -421,24 +422,24 @@ class SaleController extends Controller
                     break;
 
                 case 'pos':
-                    $totalPaidAmount += intval($request->pos_amount);
-                    $sale->pos_amount = intval($request->pos_amount);
+                    $paidThisTime = floatval($request->pos_amount);
+                    $sale->pos_amount = $paidThisTime;
                     $sale->pos_terminal = $request->pos_terminal;
                     $sale->pos_reference = $request->pos_reference;
                     $sale->pos_paid_at = now();
                     break;
 
                 case 'online':
-                    $totalPaidAmount += intval($request->online_amount);
-                    $sale->online_amount = intval($request->online_amount);
+                    $paidThisTime = floatval($request->online_amount);
+                    $sale->online_amount = $paidThisTime;
                     $sale->online_transaction_id = $request->online_transaction_id;
                     $sale->online_reference = $request->online_reference;
                     $sale->online_paid_at = now();
                     break;
 
                 case 'cheque':
-                    $totalPaidAmount += intval($request->cheque_amount);
-                    $sale->cheque_amount = intval($request->cheque_amount);
+                    $paidThisTime = floatval($request->cheque_amount);
+                    $sale->cheque_amount = $paidThisTime;
                     $sale->cheque_number = $request->cheque_number;
                     $sale->cheque_bank = $request->cheque_bank;
                     $sale->cheque_due_date = $request->cheque_due_date;
@@ -447,25 +448,24 @@ class SaleController extends Controller
                     break;
 
                 case 'multi':
+                    // جمع همه مقادیر چندگانه
                     if($request->has('multi_cash_amount')) {
-                        $totalPaidAmount += intval($request->multi_cash_amount);
-                        $sale->cash_amount = intval($request->multi_cash_amount);
+                        $paidThisTime += floatval($request->multi_cash_amount);
+                        $sale->cash_amount = floatval($request->multi_cash_amount);
                         $sale->cash_reference = $request->multi_cash_reference;
                         $sale->cash_paid_at = now();
                     }
-
                     if($request->has('multi_card_amount')) {
-                        $totalPaidAmount += intval($request->multi_card_amount);
-                        $sale->card_amount = intval($request->multi_card_amount);
+                        $paidThisTime += floatval($request->multi_card_amount);
+                        $sale->card_amount = floatval($request->multi_card_amount);
                         $sale->card_number = $request->multi_card_number;
                         $sale->card_bank = $request->multi_card_bank;
                         $sale->card_reference = $request->multi_card_reference;
                         $sale->card_paid_at = now();
                     }
-
                     if($request->has('multi_cheque_amount')) {
-                        $totalPaidAmount += intval($request->multi_cheque_amount);
-                        $sale->cheque_amount = intval($request->multi_cheque_amount);
+                        $paidThisTime += floatval($request->multi_cheque_amount);
+                        $sale->cheque_amount = floatval($request->multi_cheque_amount);
                         $sale->cheque_number = $request->multi_cheque_number;
                         $sale->cheque_bank = $request->multi_cheque_bank;
                         $sale->cheque_due_date = $request->multi_cheque_due_date;
@@ -475,17 +475,26 @@ class SaleController extends Controller
                     break;
             }
 
-            // به‌روزرسانی مقادیر اصلی
-            $sale->final_amount = $finalAmount;
-            $sale->paid_amount = $totalPaidAmount;
-            $sale->remaining_amount = $finalAmount - $totalPaidAmount;
+            // جمع پرداخت نهایی
+            $totalPaidAmount = $previousPaid + $paidThisTime;
 
-            if ($sale->remaining_amount < 0) {
-                $sale->remaining_amount = 0;
+            // محاسبه مانده با دقت اعشاری
+            $remaining = $finalAmount - $totalPaidAmount;
+
+            // اگر باقی‌مانده ناچیز بود (مثلاً کمتر از 5 تومان)، صفر فرض کن
+            if (abs($remaining) < 5) {
+                $remaining = 0;
+            }
+            if ($remaining < 0) {
+                $remaining = 0;
             }
 
-            // وضعیت پرداخت
-            if ($sale->remaining_amount == 0) {
+            $sale->final_amount = $finalAmount;
+            $sale->paid_amount = $totalPaidAmount;
+            $sale->remaining_amount = $remaining;
+
+            // تعیین وضعیت پرداخت
+            if ($remaining == 0) {
                 $sale->status = 'paid';
                 $sale->paid_at = now();
             } else {
@@ -501,7 +510,7 @@ class SaleController extends Controller
             return redirect()->route('sales.show', $sale)->with('success', 'پرداخت با موفقیت ثبت شد.');
         } catch (\Exception $ex) {
             DB::rollBack();
-            return back()->with('error', 'خطا در ثبت پرداخت: ' . $ex->getMessage());
+            return back()->withInput()->withErrors(['error' => 'خطا در ثبت پرداخت: ' . $ex->getMessage()]);
         }
     }
 

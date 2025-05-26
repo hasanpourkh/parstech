@@ -12,6 +12,21 @@
 @endsection
 
 @section('content')
+@if ($errors->any())
+    <div style="background:red;color:white;padding:10px;">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+@if(session('success'))
+    <div style="background:green;color:white;padding:10px;">
+        {{ session('success') }}
+    </div>
+@endif
 <div class="sales-show-container animate-fade-in">
 
     <!-- هدر فاکتور -->
@@ -359,7 +374,158 @@
             </form>
         </div>
     </div>
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">اطلاعات پرداختی فاکتور</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover text-center">
+                <thead class="thead-light">
+                    <tr>
+                        <th>ردیف</th>
+                        <th>روش پرداخت</th>
+                        <th>مبلغ (تومان)</th>
+                        <th>جزئیات</th>
+                        <th>تاریخ پرداخت</th>
+                        <th>وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $row = 1; @endphp
 
+                    {{-- پرداخت نقدی --}}
+                    @if($sale->cash_amount)
+                        <tr>
+                            <td>{{ $row++ }}</td>
+                            <td>نقدی</td>
+                            <td>{{ number_format($sale->cash_amount) }}</td>
+                            <td>
+                                @if($sale->cash_reference)
+                                    کد پیگیری: {{ $sale->cash_reference }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                {{ $sale->cash_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->cash_paid_at)->format('Y/m/d H:i') : '-' }}
+                            </td>
+                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                        </tr>
+                    @endif
+
+                    {{-- کارت به کارت --}}
+                    @if($sale->card_amount)
+                        <tr>
+                            <td>{{ $row++ }}</td>
+                            <td>کارت به کارت</td>
+                            <td>{{ number_format($sale->card_amount) }}</td>
+                            <td>
+                                @if($sale->card_number || $sale->card_bank || $sale->card_reference)
+                                    شماره کارت: {{ $sale->card_number ?? '-' }}<br>
+                                    بانک: {{ $sale->card_bank ?? '-' }}<br>
+                                    کد پیگیری: {{ $sale->card_reference ?? '-' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>
+                                {{ $sale->card_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->card_paid_at)->format('Y/m/d H:i') : '-' }}
+                            </td>
+                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                        </tr>
+                    @endif
+
+                    {{-- دستگاه POS --}}
+                    @if($sale->pos_amount)
+                        <tr>
+                            <td>{{ $row++ }}</td>
+                            <td>POS</td>
+                            <td>{{ number_format($sale->pos_amount) }}</td>
+                            <td>
+                                ترمینال: {{ $sale->pos_terminal ?? '-' }}<br>
+                                کد پیگیری: {{ $sale->pos_reference ?? '-' }}
+                            </td>
+                            <td>
+                                {{ $sale->pos_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->pos_paid_at)->format('Y/m/d H:i') : '-' }}
+                            </td>
+                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                        </tr>
+                    @endif
+
+                    {{-- پرداخت آنلاین --}}
+                    @if($sale->online_amount)
+                        <tr>
+                            <td>{{ $row++ }}</td>
+                            <td>آنلاین</td>
+                            <td>{{ number_format($sale->online_amount) }}</td>
+                            <td>
+                                شماره تراکنش: {{ $sale->online_transaction_id ?? '-' }}<br>
+                                کد پیگیری: {{ $sale->online_reference ?? '-' }}
+                            </td>
+                            <td>
+                                {{ $sale->online_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->online_paid_at)->format('Y/m/d H:i') : '-' }}
+                            </td>
+                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                        </tr>
+                    @endif
+
+                    {{-- چک --}}
+                    @if($sale->cheque_amount)
+                        <tr>
+                            <td>{{ $row++ }}</td>
+                            <td>چک</td>
+                            <td>{{ number_format($sale->cheque_amount) }}</td>
+                            <td>
+                                شماره چک: {{ $sale->cheque_number ?? '-' }}<br>
+                                بانک: {{ $sale->cheque_bank ?? '-' }}<br>
+                                تاریخ سررسید: {{ $sale->cheque_due_date ? \Hekmatinasser\Verta\Verta::instance($sale->cheque_due_date)->format('Y/m/d') : '-' }}<br>
+                                وضعیت: {{ $sale->cheque_status ?? '-' }}
+                            </td>
+                            <td>
+                                {{ $sale->cheque_received_at ? \Hekmatinasser\Verta\Verta::instance($sale->cheque_received_at)->format('Y/m/d H:i') : '-' }}
+                            </td>
+                            <td>{{ $sale->cheque_status == 'paid' ? 'وصول شده' : 'در انتظار وصول' }}</td>
+                        </tr>
+                    @endif
+
+                    {{-- پرداخت اقساطی --}}
+                    @if(isset($sale->installments) && $sale->installments->count() > 0)
+                        @foreach($sale->installments as $i => $installment)
+                            <tr>
+                                <td>{{ $row++ }}</td>
+                                <td>
+                                    اقساطی
+                                    <br>
+                                    <small>
+                                        {{ $installment->type == 'monthly' ? 'ماهانه' : ($installment->type == 'weekly' ? 'هفتگی' : '-') }}
+                                    </small>
+                                </td>
+                                <td>{{ number_format($installment->amount) }}</td>
+                                <td>
+                                    شماره قسط: {{ $i + 1 }}<br>
+                                    سررسید: {{ \Hekmatinasser\Verta\Verta::instance($installment->due_date)->format('Y/m/d') }}<br>
+                                    وضعیت: {{ $installment->status == 'paid' ? 'پرداخت شده' : 'در انتظار پرداخت' }}
+                                </td>
+                                <td>
+                                    {{ $installment->paid_at ? \Hekmatinasser\Verta\Verta::instance($installment->paid_at)->format('Y/m/d H:i') : '-' }}
+                                </td>
+                                <td>
+                                    {{ $installment->status == 'paid' ? 'پرداخت شده' : 'در انتظار پرداخت' }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    @endif
+
+                    {{-- اگر هیچ پرداختی نبوده --}}
+                    @if($row == 1)
+                        <tr>
+                            <td colspan="6">هیچ پرداختی ثبت نشده است.</td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    </div>
     <!-- یادداشت‌ها -->
     @if($sale->notes)
     <div class="invoice-notes animate-fade-in" style="animation-delay: 0.6s">

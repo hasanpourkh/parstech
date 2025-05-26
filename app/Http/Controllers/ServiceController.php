@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shareholder;
 use Illuminate\Http\Request;
 use App\Models\Service;
 use App\Models\Category;
@@ -10,6 +11,19 @@ use Illuminate\Support\Facades\Validator;
 
 class ServiceController extends Controller
 {
+
+    /**
+     * نمایش فرم افزودن خدمت جدید
+     */
+    public function create()
+    {
+        $serviceCategories = Category::where('category_type', 'service')->get();
+        $units = Unit::orderBy('title')->get();
+        $shareholders = Shareholder::all(); // این خط برای پاس دادن به ویو لازم است
+        return view('services.create', compact('serviceCategories', 'units', 'shareholders'));
+    }
+
+
     /**
      * لیست خدمات
      */
@@ -70,15 +84,6 @@ class ServiceController extends Controller
         return response()->json(['code' => 'services-' . $next]);
     }
 
-    /**
-     * نمایش فرم افزودن خدمت جدید
-     */
-    public function create()
-    {
-        $serviceCategories = Category::where('category_type', 'service')->get();
-        $units = Unit::orderBy('title')->get();
-        return view('services.create', compact('serviceCategories', 'units'));
-    }
 
     /**
      * ثبت خدمت جدید

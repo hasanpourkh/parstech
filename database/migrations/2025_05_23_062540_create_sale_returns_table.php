@@ -10,18 +10,17 @@ return new class extends Migration
     {
         Schema::create('sale_returns', function (Blueprint $table) {
             $table->id();
-            $table->string('number')->unique();   // شماره برگشت
-            $table->string('reference')->nullable(); // ارجاع
-            $table->unsignedBigInteger('sale_id')->nullable();
-            $table->unsignedBigInteger('customer_id')->nullable();
-            $table->date('date');             // تاریخ ثبت
-            $table->date('due_date')->nullable(); // تاریخ سررسید
-            $table->bigInteger('total_amount');
+            $table->unsignedBigInteger('sale_id');
+            $table->string('return_number')->unique();
+            $table->dateTime('return_date')->default(DB::raw('CURRENT_TIMESTAMP'));
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->text('note')->nullable();
+            $table->decimal('total_amount', 18, 2)->default(0);
             $table->timestamps();
 
-            $table->foreign('sale_id')->references('id')->on('sales')->onDelete('set null');
-            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('set null');
+            $table->foreign('sale_id')->references('id')->on('sales')->onDelete('cascade');
+            // اگر می‌خواهی user_id کلید خارجی به users باشد این را هم فعال کن:
+            // $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
         });
     }
 

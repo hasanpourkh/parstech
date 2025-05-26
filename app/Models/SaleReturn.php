@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SaleReturn extends Model
 {
     protected $fillable = [
-        'sale_id', 'note', 'user_id', 'return_number'
+        'sale_id', 'return_number', 'return_date', 'user_id', 'note', 'total_amount'
     ];
 
     public static function generateReturnNumber()

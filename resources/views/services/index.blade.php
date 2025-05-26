@@ -6,6 +6,7 @@
 @endsection
 
 @section('content')
+
 <section class="content pt-4">
     <div class="container-fluid">
         <div class="card card-outline card-primary shadow">

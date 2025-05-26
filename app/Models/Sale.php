@@ -117,6 +117,11 @@ class Sale extends Model
 
 
 
+    public function installments()
+    {
+        return $this->hasMany(Installment::class);
+    }
+    
     public function getFormattedDateAttribute()
     {
         if ($this->created_at) {

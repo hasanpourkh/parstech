@@ -8,25 +8,12 @@
     .status-paid     { color: #16a34a; font-weight: bold; }
     .status-partial  { color: #f59e42; font-weight: bold; }
     .status-unpaid   { color: #dc2626; font-weight: bold; }
+    .installment-table th, .installment-table td { text-align: center; }
+    .installment-table input { width: 100px; }
 </style>
 @endsection
 
 @section('content')
-@if ($errors->any())
-    <div style="background:red;color:white;padding:10px;">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-@if(session('success'))
-    <div style="background:green;color:white;padding:10px;">
-        {{ session('success') }}
-    </div>
-@endif
 <div class="sales-show-container animate-fade-in">
 
     <!-- هدر فاکتور -->
@@ -142,7 +129,18 @@
                 @if($sale->payment_method)
                 <div class="info-row">
                     <span class="info-label">روش پرداخت:</span>
-                    <span class="info-value">{{ $sale->payment_method }}</span>
+                    <span class="info-value">
+                        @switch($sale->payment_method)
+                            @case('cash') پرداخت نقدی @break
+                            @case('card') کارت به کارت @break
+                            @case('pos') دستگاه کارتخوان @break
+                            @case('online') پرداخت آنلاین @break
+                            @case('cheque') چک @break
+                            @case('installment') اقساطی @break
+                            @case('multi') چند روش پرداخت @break
+                            @default {{ $sale->payment_method }}
+                        @endswitch
+                    </span>
                 </div>
                 @endif
             </div>
@@ -277,7 +275,6 @@
             <h3 class="summary-title">ثبت یا ویرایش پرداخت</h3>
             <form id="statusUpdateForm" action="{{ route('sales.update-status', $sale) }}" method="POST" novalidate>
                 @csrf
-                {{-- @method('PATCH') حذف شد تا فقط POST ارسال شود --}}
                 <div class="form-group mb-3">
                     <label class="form-label">روش پرداخت</label>
                     <select name="payment_method" class="form-select" required id="paymentMethodSelect">
@@ -287,96 +284,60 @@
                         <option value="pos" {{ old('payment_method', $sale->payment_method) == 'pos' ? 'selected' : '' }}>دستگاه کارتخوان</option>
                         <option value="online" {{ old('payment_method', $sale->payment_method) == 'online' ? 'selected' : '' }}>پرداخت آنلاین</option>
                         <option value="cheque" {{ old('payment_method', $sale->payment_method) == 'cheque' ? 'selected' : '' }}>چک</option>
+                        <option value="installment" {{ old('payment_method', $sale->payment_method) == 'installment' ? 'selected' : '' }}>پرداخت اقساطی</option>
                         <option value="multi" {{ old('payment_method', $sale->payment_method) == 'multi' ? 'selected' : '' }}>چند روش پرداخت</option>
                     </select>
                 </div>
 
-                <!-- فرم نقدی -->
-                <div id="cashPaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='cash'?'':'d-none' }}">
-                    <div class="form-group mb-3">
-                        <label class="form-label">مبلغ نقدی (تومان)</label>
-                        <input type="number" step="0.01" name="cash_amount" class="form-control" value="{{ old('cash_amount', $sale->cash_amount) }}">
+                <!-- فرم‌های هر روش پرداخت -->
+                @include('sales.partials.payment-forms', ['sale' => $sale])
+                <!-- فرم اقساطی -->
+                <div id="installmentPaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='installment'?'':'d-none' }}">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i> اطلاعات زیر برای ثبت اقساط قابل ویرایش و افزودن است.
                     </div>
                     <div class="form-group mb-3">
-                        <label class="form-label">شماره رسید</label>
-                        <input type="text" name="cash_reference" class="form-control" value="{{ old('cash_reference', $sale->cash_reference) }}">
-                    </div>
-                </div>
-                <!-- فرم کارت به کارت -->
-                <div id="cardPaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='card'?'':'d-none' }}">
-                    <div class="form-group mb-3">
-                        <label class="form-label">مبلغ کارت به کارت (تومان)</label>
-                        <input type="number" step="0.01" name="card_amount" class="form-control" value="{{ old('card_amount', $sale->card_amount) }}">
+                        <label class="form-label">نوع اقساط</label>
+                        <select name="installment_type" class="form-select" id="installmentTypeSelect">
+                            <option value="monthly" {{ old('installment_type', 'monthly') == 'monthly' ? 'selected' : '' }}>ماهانه</option>
+                            <option value="weekly" {{ old('installment_type') == 'weekly' ? 'selected' : '' }}>هفتگی</option>
+                        </select>
                     </div>
                     <div class="form-group mb-3">
-                        <label class="form-label">شماره کارت مقصد</label>
-                        <input type="text" name="card_number" class="form-control" value="{{ old('card_number', $sale->card_number) }}">
+                        <label class="form-label">تعداد اقساط</label>
+                        <input type="number" min="1" name="installment_count" id="installmentCountInput" class="form-control" value="{{ old('installment_count', 3) }}">
                     </div>
                     <div class="form-group mb-3">
-                        <label class="form-label">نام بانک</label>
-                        <input type="text" name="card_bank" class="form-control" value="{{ old('card_bank', $sale->card_bank) }}">
+                        <label class="form-label">مبلغ هر قسط (تومان)</label>
+                        <input type="number" min="1" name="installment_amount" id="installmentAmountInput" class="form-control" value="{{ old('installment_amount', ceil($remaining_amount / max(1, old('installment_count',3)))) }}">
                     </div>
                     <div class="form-group mb-3">
-                        <label class="form-label">شماره پیگیری</label>
-                        <input type="text" name="card_reference" class="form-control" value="{{ old('card_reference', $sale->card_reference) }}">
+                        <label class="form-label">تاریخ شروع اقساط</label>
+                        <input type="date" name="installment_start_date" id="installmentStartDate" class="form-control" value="{{ old('installment_start_date', \Carbon\Carbon::now()->format('Y-m-d')) }}">
                     </div>
-                </div>
-                <!-- فرم دستگاه کارتخوان -->
-                <div id="posPaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='pos'?'':'d-none' }}">
-                    <div class="form-group mb-3">
-                        <label class="form-label">مبلغ کارتخوان (تومان)</label>
-                        <input type="number" step="0.01" name="pos_amount" class="form-control" value="{{ old('pos_amount', $sale->pos_amount) }}">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-info" id="generateInstallmentsBtn">
+                            <i class="fas fa-plus"></i> تولید اقساط
+                        </button>
                     </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label">شماره پایانه</label>
-                        <input type="text" name="pos_terminal" class="form-control" value="{{ old('pos_terminal', $sale->pos_terminal) }}">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label">شماره پیگیری</label>
-                        <input type="text" name="pos_reference" class="form-control" value="{{ old('pos_reference', $sale->pos_reference) }}">
+                    <div id="installmentsTableContainer">
+                        <!-- جدول اقساط به صورت داینامیک اضافه می‌شود -->
                     </div>
                 </div>
-                <!-- فرم پرداخت آنلاین -->
-                <div id="onlinePaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='online'?'':'d-none' }}">
-                    <div class="form-group mb-3">
-                        <label class="form-label">مبلغ پرداخت آنلاین (تومان)</label>
-                        <input type="number" step="0.01" name="online_amount" class="form-control" value="{{ old('online_amount', $sale->online_amount) }}">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label">شماره تراکنش</label>
-                        <input type="text" name="online_transaction_id" class="form-control" value="{{ old('online_transaction_id', $sale->online_transaction_id) }}">
-                    </div>
-                </div>
-                <!-- فرم چک -->
-                <div id="chequePaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='cheque'?'':'d-none' }}">
-                    <div class="form-group mb-3">
-                        <label class="form-label">مبلغ چک (تومان)</label>
-                        <input type="number" step="0.01" name="cheque_amount" class="form-control" value="{{ old('cheque_amount', $sale->cheque_amount) }}">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label">شماره چک</label>
-                        <input type="text" name="cheque_number" class="form-control" value="{{ old('cheque_number', $sale->cheque_number) }}">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label">نام بانک</label>
-                        <input type="text" name="cheque_bank" class="form-control" value="{{ old('cheque_bank', $sale->cheque_bank) }}">
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label">تاریخ سررسید</label>
-                        <input type="date" name="cheque_due_date" class="form-control" value="{{ old('cheque_due_date', $sale->cheque_due_date) }}">
-                    </div>
-                </div>
+                <!-- پایان فرم اقساطی -->
 
-                <button type="submit" class="btn btn-primary w-100">
+                <button type="submit" class="btn btn-primary w-100 mt-3">
                     <i class="fas fa-save"></i>
                     <span>ثبت یا ویرایش پرداخت</span>
                 </button>
             </form>
         </div>
     </div>
-    <div class="card mt-4">
+
+    <!-- نمایش اطلاعات پرداخت‌های انجام‌شده (اقساطی و غیر اقساطی) -->
+    <div class="card mt-4 animate-fade-in">
         <div class="card-header bg-info text-white">
-            <h5 class="mb-0">اطلاعات پرداختی فاکتور</h5>
+            <h5 class="mb-0">اطلاعات پرداختی ثبت‌شده</h5>
         </div>
         <div class="card-body">
             <table class="table table-bordered table-hover text-center">
@@ -391,141 +352,128 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $row = 1; @endphp
-
-                    {{-- پرداخت نقدی --}}
-                    @if($sale->cash_amount)
+                @php $row = 1; @endphp
+                @if($sale->cash_amount)
+                    <tr>
+                        <td>{{ $row++ }}</td>
+                        <td>نقدی</td>
+                        <td>{{ number_format($sale->cash_amount) }}</td>
+                        <td>
+                            @if($sale->cash_reference)
+                                کد پیگیری: {{ $sale->cash_reference }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            {{ $sale->cash_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->cash_paid_at)->format('Y/m/d H:i') : '-' }}
+                        </td>
+                        <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                    </tr>
+                @endif
+                @if($sale->card_amount)
+                    <tr>
+                        <td>{{ $row++ }}</td>
+                        <td>کارت به کارت</td>
+                        <td>{{ number_format($sale->card_amount) }}</td>
+                        <td>
+                            @if($sale->card_number || $sale->card_bank || $sale->card_reference)
+                                شماره کارت: {{ $sale->card_number ?? '-' }}<br>
+                                بانک: {{ $sale->card_bank ?? '-' }}<br>
+                                کد پیگیری: {{ $sale->card_reference ?? '-' }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            {{ $sale->card_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->card_paid_at)->format('Y/m/d H:i') : '-' }}
+                        </td>
+                        <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                    </tr>
+                @endif
+                @if($sale->pos_amount)
+                    <tr>
+                        <td>{{ $row++ }}</td>
+                        <td>POS</td>
+                        <td>{{ number_format($sale->pos_amount) }}</td>
+                        <td>
+                            ترمینال: {{ $sale->pos_terminal ?? '-' }}<br>
+                            کد پیگیری: {{ $sale->pos_reference ?? '-' }}
+                        </td>
+                        <td>
+                            {{ $sale->pos_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->pos_paid_at)->format('Y/m/d H:i') : '-' }}
+                        </td>
+                        <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                    </tr>
+                @endif
+                @if($sale->online_amount)
+                    <tr>
+                        <td>{{ $row++ }}</td>
+                        <td>آنلاین</td>
+                        <td>{{ number_format($sale->online_amount) }}</td>
+                        <td>
+                            شماره تراکنش: {{ $sale->online_transaction_id ?? '-' }}<br>
+                            کد پیگیری: {{ $sale->online_reference ?? '-' }}
+                        </td>
+                        <td>
+                            {{ $sale->online_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->online_paid_at)->format('Y/m/d H:i') : '-' }}
+                        </td>
+                        <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                    </tr>
+                @endif
+                @if($sale->cheque_amount)
+                    <tr>
+                        <td>{{ $row++ }}</td>
+                        <td>چک</td>
+                        <td>{{ number_format($sale->cheque_amount) }}</td>
+                        <td>
+                            شماره چک: {{ $sale->cheque_number ?? '-' }}<br>
+                            بانک: {{ $sale->cheque_bank ?? '-' }}<br>
+                            تاریخ سررسید: {{ $sale->cheque_due_date ? \Hekmatinasser\Verta\Verta::instance($sale->cheque_due_date)->format('Y/m/d') : '-' }}<br>
+                            وضعیت: {{ $sale->cheque_status ?? '-' }}
+                        </td>
+                        <td>
+                            {{ $sale->cheque_received_at ? \Hekmatinasser\Verta\Verta::instance($sale->cheque_received_at)->format('Y/m/d H:i') : '-' }}
+                        </td>
+                        <td>{{ $sale->cheque_status == 'paid' ? 'وصول شده' : 'در انتظار وصول' }}</td>
+                    </tr>
+                @endif
+                @if($sale->installments && $sale->installments->count() > 0)
+                    @foreach($sale->installments as $i => $installment)
                         <tr>
                             <td>{{ $row++ }}</td>
-                            <td>نقدی</td>
-                            <td>{{ number_format($sale->cash_amount) }}</td>
                             <td>
-                                @if($sale->cash_reference)
-                                    کد پیگیری: {{ $sale->cash_reference }}
-                                @else
-                                    -
-                                @endif
+                                اقساطی
+                                <br>
+                                <small>
+                                    {{ $installment->type == 'monthly' ? 'ماهانه' : ($installment->type == 'weekly' ? 'هفتگی' : '-') }}
+                                </small>
+                            </td>
+                            <td>{{ number_format($installment->amount) }}</td>
+                            <td>
+                                شماره قسط: {{ $installment->number }}<br>
+                                سررسید: {{ \Hekmatinasser\Verta\Verta::instance($installment->due_date)->format('Y/m/d') }}<br>
+                                وضعیت: {{ $installment->status == 'paid' ? 'پرداخت شده' : ($installment->status == 'overdue' ? 'سررسید گذشته' : 'در انتظار پرداخت') }}
                             </td>
                             <td>
-                                {{ $sale->cash_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->cash_paid_at)->format('Y/m/d H:i') : '-' }}
+                                {{ $installment->paid_at ? \Hekmatinasser\Verta\Verta::instance($installment->paid_at)->format('Y/m/d H:i') : '-' }}
                             </td>
-                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
+                            <td>
+                                {{ $installment->status == 'paid' ? 'پرداخت شده' : ($installment->status == 'overdue' ? 'سررسید گذشته' : 'در انتظار پرداخت') }}
+                            </td>
                         </tr>
-                    @endif
-
-                    {{-- کارت به کارت --}}
-                    @if($sale->card_amount)
-                        <tr>
-                            <td>{{ $row++ }}</td>
-                            <td>کارت به کارت</td>
-                            <td>{{ number_format($sale->card_amount) }}</td>
-                            <td>
-                                @if($sale->card_number || $sale->card_bank || $sale->card_reference)
-                                    شماره کارت: {{ $sale->card_number ?? '-' }}<br>
-                                    بانک: {{ $sale->card_bank ?? '-' }}<br>
-                                    کد پیگیری: {{ $sale->card_reference ?? '-' }}
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>
-                                {{ $sale->card_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->card_paid_at)->format('Y/m/d H:i') : '-' }}
-                            </td>
-                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
-                        </tr>
-                    @endif
-
-                    {{-- دستگاه POS --}}
-                    @if($sale->pos_amount)
-                        <tr>
-                            <td>{{ $row++ }}</td>
-                            <td>POS</td>
-                            <td>{{ number_format($sale->pos_amount) }}</td>
-                            <td>
-                                ترمینال: {{ $sale->pos_terminal ?? '-' }}<br>
-                                کد پیگیری: {{ $sale->pos_reference ?? '-' }}
-                            </td>
-                            <td>
-                                {{ $sale->pos_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->pos_paid_at)->format('Y/m/d H:i') : '-' }}
-                            </td>
-                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
-                        </tr>
-                    @endif
-
-                    {{-- پرداخت آنلاین --}}
-                    @if($sale->online_amount)
-                        <tr>
-                            <td>{{ $row++ }}</td>
-                            <td>آنلاین</td>
-                            <td>{{ number_format($sale->online_amount) }}</td>
-                            <td>
-                                شماره تراکنش: {{ $sale->online_transaction_id ?? '-' }}<br>
-                                کد پیگیری: {{ $sale->online_reference ?? '-' }}
-                            </td>
-                            <td>
-                                {{ $sale->online_paid_at ? \Hekmatinasser\Verta\Verta::instance($sale->online_paid_at)->format('Y/m/d H:i') : '-' }}
-                            </td>
-                            <td>{{ $sale->status == 'paid' ? 'پرداخت کامل' : 'پرداخت جزئی' }}</td>
-                        </tr>
-                    @endif
-
-                    {{-- چک --}}
-                    @if($sale->cheque_amount)
-                        <tr>
-                            <td>{{ $row++ }}</td>
-                            <td>چک</td>
-                            <td>{{ number_format($sale->cheque_amount) }}</td>
-                            <td>
-                                شماره چک: {{ $sale->cheque_number ?? '-' }}<br>
-                                بانک: {{ $sale->cheque_bank ?? '-' }}<br>
-                                تاریخ سررسید: {{ $sale->cheque_due_date ? \Hekmatinasser\Verta\Verta::instance($sale->cheque_due_date)->format('Y/m/d') : '-' }}<br>
-                                وضعیت: {{ $sale->cheque_status ?? '-' }}
-                            </td>
-                            <td>
-                                {{ $sale->cheque_received_at ? \Hekmatinasser\Verta\Verta::instance($sale->cheque_received_at)->format('Y/m/d H:i') : '-' }}
-                            </td>
-                            <td>{{ $sale->cheque_status == 'paid' ? 'وصول شده' : 'در انتظار وصول' }}</td>
-                        </tr>
-                    @endif
-
-                    {{-- پرداخت اقساطی --}}
-                    @if(isset($sale->installments) && $sale->installments->count() > 0)
-                        @foreach($sale->installments as $i => $installment)
-                            <tr>
-                                <td>{{ $row++ }}</td>
-                                <td>
-                                    اقساطی
-                                    <br>
-                                    <small>
-                                        {{ $installment->type == 'monthly' ? 'ماهانه' : ($installment->type == 'weekly' ? 'هفتگی' : '-') }}
-                                    </small>
-                                </td>
-                                <td>{{ number_format($installment->amount) }}</td>
-                                <td>
-                                    شماره قسط: {{ $i + 1 }}<br>
-                                    سررسید: {{ \Hekmatinasser\Verta\Verta::instance($installment->due_date)->format('Y/m/d') }}<br>
-                                    وضعیت: {{ $installment->status == 'paid' ? 'پرداخت شده' : 'در انتظار پرداخت' }}
-                                </td>
-                                <td>
-                                    {{ $installment->paid_at ? \Hekmatinasser\Verta\Verta::instance($installment->paid_at)->format('Y/m/d H:i') : '-' }}
-                                </td>
-                                <td>
-                                    {{ $installment->status == 'paid' ? 'پرداخت شده' : 'در انتظار پرداخت' }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    @endif
-
-                    {{-- اگر هیچ پرداختی نبوده --}}
-                    @if($row == 1)
-                        <tr>
-                            <td colspan="6">هیچ پرداختی ثبت نشده است.</td>
-                        </tr>
-                    @endif
+                    @endforeach
+                @endif
+                @if($row == 1)
+                    <tr>
+                        <td colspan="6">هیچ پرداختی ثبت نشده است.</td>
+                    </tr>
+                @endif
                 </tbody>
             </table>
         </div>
     </div>
+
     <!-- یادداشت‌ها -->
     @if($sale->notes)
     <div class="invoice-notes animate-fade-in" style="animation-delay: 0.6s">
@@ -546,7 +494,7 @@
     // نمایش فرم هر روش پرداخت بر اساس انتخاب
     function togglePaymentForms() {
         let val = document.getElementById('paymentMethodSelect').value;
-        let methods = ['cash', 'card', 'pos', 'online', 'cheque', 'multi'];
+        let methods = ['cash', 'card', 'pos', 'online', 'cheque', 'installment', 'multi'];
         methods.forEach(function(method){
             let el = document.getElementById(method+'PaymentForm');
             if(el) el.classList.add('d-none');
@@ -557,6 +505,51 @@
     }
     document.getElementById('paymentMethodSelect').addEventListener('change', togglePaymentForms);
     window.addEventListener('DOMContentLoaded', togglePaymentForms);
+
+    // تولید اقساط داینامیک
+    function generateInstallmentsTable() {
+        let count = parseInt(document.getElementById('installmentCountInput').value) || 1;
+        let amount = parseInt(document.getElementById('installmentAmountInput').value) || 0;
+        let startDate = document.getElementById('installmentStartDate').value;
+        let type = document.getElementById('installmentTypeSelect').value;
+        if (!startDate) {
+            alert("لطفا تاریخ شروع اقساط را وارد کنید");
+            return;
+        }
+        let table = `<table class="table table-bordered installment-table"><thead>
+            <tr>
+                <th>شماره قسط</th>
+                <th>تاریخ سررسید</th>
+                <th>مبلغ قسط (تومان)</th>
+                <th>وضعیت پرداخت</th>
+            </tr></thead><tbody>`;
+        let date = new Date(startDate);
+        for(let i=1; i<=count; i++){
+            let dueDate = new Date(date);
+            if(i > 1){
+                if(type === 'monthly') dueDate.setMonth(dueDate.getMonth() + (i-1));
+                if(type === 'weekly') dueDate.setDate(dueDate.getDate() + 7*(i-1));
+            }
+            let dueDateStr = dueDate.toISOString().split('T')[0];
+            table += `<tr>
+                <td>${i}</td>
+                <td><input type="date" name="installments[${i}][due_date]" value="${dueDateStr}" class="form-control"></td>
+                <td><input type="number" name="installments[${i}][amount]" value="${amount}" class="form-control"></td>
+                <td>
+                    <select name="installments[${i}][status]" class="form-select">
+                        <option value="pending">در انتظار پرداخت</option>
+                        <option value="paid">پرداخت شده</option>
+                        <option value="overdue">سررسید گذشته</option>
+                    </select>
+                </td>
+            </tr>`;
+        }
+        table += "</tbody></table>";
+        document.getElementById('installmentsTableContainer').innerHTML = table;
+    }
+    if(document.getElementById('generateInstallmentsBtn')){
+        document.getElementById('generateInstallmentsBtn').addEventListener('click', generateInstallmentsTable);
+    }
 
     // تابع تبدیل عدد انگلیسی به فارسی
     function toFaNumber(str) {
@@ -569,9 +562,8 @@
         });
     }
     window.addEventListener('DOMContentLoaded', convertAllNumbersToFa);
-    // اگر ajax داشتی یا بعد از فرم نیاز شد، دوباره convertAllNumbersToFa() اجرا شود
-    // تابع مدیریت پرینت
 
+    // تابع مدیریت پرینت
     const InvoiceManager = {
         printInvoice() {
             window.open("{{ route('sales.print', $sale) }}", "_blank");

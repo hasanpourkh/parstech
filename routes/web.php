@@ -43,7 +43,10 @@ use App\Http\Controllers\BackupController;
 
 
 
-
+Route::middleware(['auth'])->group(function () {
+    Route::get('/settings/company', [App\Http\Controllers\SettingsController::class, 'company'])->name('settings.company');
+    Route::post('/settings/company', [App\Http\Controllers\SettingsController::class, 'updateCompany'])->name('settings.company.update');
+});
 
 // مسیرهای مرجوعی فروش
 Route::prefix('sales/returns')->name('sale_returns.')->group(function() {

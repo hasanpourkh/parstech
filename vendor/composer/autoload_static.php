@@ -766,6 +766,13 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
     );
 
     public static $prefixesPsr0 = array (
+        'M' => 
+        array (
+            'Milon\\Barcode' => 
+            array (
+                0 => __DIR__ . '/..' . '/milon/barcode/src',
+            ),
+        ),
         'H' => 
         array (
             'HTMLPurifier' => 
@@ -810,6 +817,7 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Http\\Controllers\\ProductController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProductController.php',
         'App\\Http\\Controllers\\ProfileController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProfileController.php',
         'App\\Http\\Controllers\\ProvinceController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProvinceController.php',
+        'App\\Http\\Controllers\\SaleAjaxController' => __DIR__ . '/../..' . '/app/Http/Controllers/SaleAjaxController.php',
         'App\\Http\\Controllers\\SaleController' => __DIR__ . '/../..' . '/app/Http/Controllers/SaleController.php',
         'App\\Http\\Controllers\\SaleReturnController' => __DIR__ . '/../..' . '/app/Http/Controllers/SaleReturnController.php',
         'App\\Http\\Controllers\\SellerController' => __DIR__ . '/../..' . '/app/Http/Controllers/SellerController.php',
@@ -835,6 +843,7 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Models\\CustomerPurchase' => __DIR__ . '/../..' . '/app/Models/CustomerPurchase.php',
         'App\\Models\\Expense' => __DIR__ . '/../..' . '/app/Models/Expense.php',
         'App\\Models\\Income' => __DIR__ . '/../..' . '/app/Models/Income.php',
+        'App\\Models\\Installment' => __DIR__ . '/../..' . '/app/Models/Installment.php',
         'App\\Models\\Invoice' => __DIR__ . '/../..' . '/app/Models/Invoice.php',
         'App\\Models\\InvoiceItem' => __DIR__ . '/../..' . '/app/Models/InvoiceItem.php',
         'App\\Models\\Person' => __DIR__ . '/../..' . '/app/Models/Person.php',
@@ -843,10 +852,13 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Models\\Sale' => __DIR__ . '/../..' . '/app/Models/Sale.php',
         'App\\Models\\SaleItem' => __DIR__ . '/../..' . '/app/Models/SaleItem.php',
         'App\\Models\\SaleReturn' => __DIR__ . '/../..' . '/app/Models/SaleReturn.php',
+        'App\\Models\\SaleReturnItem' => __DIR__ . '/../..' . '/app/Models/SaleReturnItem.php',
         'App\\Models\\Seller' => __DIR__ . '/../..' . '/app/Models/Seller.php',
         'App\\Models\\SellerBankAccount' => __DIR__ . '/../..' . '/app/Models/SellerBankAccount.php',
         'App\\Models\\Service' => __DIR__ . '/../..' . '/app/Models/Service.php',
         'App\\Models\\ServiceCategory' => __DIR__ . '/../..' . '/app/Models/ServiceCategory.php',
+        'App\\Models\\Shareholder' => __DIR__ . '/../..' . '/app/Models/Shareholder.php',
+        'App\\Models\\Stock' => __DIR__ . '/../..' . '/app/Models/Stock.php',
         'App\\Models\\Unit' => __DIR__ . '/../..' . '/app/Models/Unit.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
@@ -5105,6 +5117,20 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'Matrix\\Operators\\Multiplication' => __DIR__ . '/..' . '/markbaker/matrix/classes/src/Operators/Multiplication.php',
         'Matrix\\Operators\\Operator' => __DIR__ . '/..' . '/markbaker/matrix/classes/src/Operators/Operator.php',
         'Matrix\\Operators\\Subtraction' => __DIR__ . '/..' . '/markbaker/matrix/classes/src/Operators/Subtraction.php',
+        'Milon\\Barcode\\BarcodeServiceProvider' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/BarcodeServiceProvider.php',
+        'Milon\\Barcode\\DNS1D' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/DNS1D.php',
+        'Milon\\Barcode\\DNS2D' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/DNS2D.php',
+        'Milon\\Barcode\\Datamatrix' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/Datamatrix.php',
+        'Milon\\Barcode\\Facades\\DNS1DFacade' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/Facades/DNS1DFacade.php',
+        'Milon\\Barcode\\Facades\\DNS2DFacade' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/Facades/DNS2DFacade.php',
+        'Milon\\Barcode\\GS1_128\\AIData' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/GS1_128/AIData.php',
+        'Milon\\Barcode\\GS1_128\\GS1128' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/GS1_128/GS1128.php',
+        'Milon\\Barcode\\GS1_128\\Section' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/GS1_128/Section.php',
+        'Milon\\Barcode\\GS1_128\\SectionSlicer' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/GS1_128/SectionSlicer.php',
+        'Milon\\Barcode\\GS1_128\\Subsets' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/GS1_128/Subsets.php',
+        'Milon\\Barcode\\PDF417' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/PDF417.php',
+        'Milon\\Barcode\\QRcode' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/QRcode.php',
+        'Milon\\Barcode\\WrongCheckDigitException' => __DIR__ . '/..' . '/milon/barcode/src/Milon/Barcode/WrongCheckDigitException.php',
         'Mockery\\Adapter\\Phpunit\\MockeryPHPUnitIntegration' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery/Adapter/Phpunit/MockeryPHPUnitIntegration.php',
         'Mockery\\Adapter\\Phpunit\\MockeryPHPUnitIntegrationAssertPostConditions' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery/Adapter/Phpunit/MockeryPHPUnitIntegrationAssertPostConditions.php',
         'Mockery\\Adapter\\Phpunit\\MockeryTestCase' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery/Adapter/Phpunit/MockeryTestCase.php',

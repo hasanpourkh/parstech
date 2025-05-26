@@ -323,6 +323,12 @@
                                 <p>مدیریت واحدهای پول</p>
                             </a>
                         </li>
+                        <li>
+                            <a class="nav-link d-flex align-items-center py-2" href="{{ route('settings.company') }}">
+                                <i class="bi bi-shop me-2"></i>
+                                <span>اطلاعات شرکت/مغازه</span>
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 {{-- خروج --}}

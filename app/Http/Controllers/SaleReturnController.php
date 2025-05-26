@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class SaleReturnController extends Controller
 {
-    // لیست مرجوعی‌ها
     public function index()
     {
         $returns = SaleReturn::with(['sale', 'user'])
@@ -22,14 +21,12 @@ class SaleReturnController extends Controller
         return view('sales.returns.index', compact('returns'));
     }
 
-    // فرم ثبت مرجوعی جدید
     public function create()
     {
         $sales = Sale::with('buyer', 'items.product')->latest()->limit(30)->get();
         return view('sales.returns.create', compact('sales'));
     }
 
-    // ثبت مرجوعی
     public function store(Request $request)
     {
         $request->validate([
@@ -63,7 +60,12 @@ class SaleReturnController extends Controller
                 if (!$saleItem) continue;
 
                 $product = Product::find($saleItem->product_id);
-                $returnQty = min(intval($item['qty']), $saleItem->quantity);
+
+                // تعداد مجاز مرجوعی نباید بیشتر از تعداد باقی‌مانده باشد
+                $maxReturnQty = $saleItem->quantity;
+                $returnQty = min(intval($item['qty']), $maxReturnQty);
+
+                if ($returnQty < 1) continue; // اگر تعداد مجاز نبود، ادامه بده
 
                 if ($product && $product->is_product) {
                     // افزایش موجودی انبار
@@ -89,19 +91,22 @@ class SaleReturnController extends Controller
                     $totalReturnAmount += $returnQty * $saleItem->price;
                 } else {
                     // اگر سرویس است (is_product = false)
-                    $saleItem->quantity = 0;
-                    $saleItem->save();
+                    // فقط اگر بار اول مرجوعی است، ثبت کن
+                    if ($saleItem->quantity > 0) {
+                        $saleItem->quantity = 0;
+                        $saleItem->save();
 
-                    SaleReturnItem::create([
-                        'sale_return_id' => $return->id,
-                        'product_id' => $product ? $product->id : null,
-                        'qty' => 1,
-                        'reason' => $item['reason'] ?? '',
-                        'item_description' => $item['item_description'] ?? '',
-                        'barcode' => $item['barcode'] ?? null,
-                        'is_product' => false,
-                    ]);
-                    $totalReturnAmount += $saleItem->price;
+                        SaleReturnItem::create([
+                            'sale_return_id' => $return->id,
+                            'product_id' => $product ? $product->id : null,
+                            'qty' => 1,
+                            'reason' => $item['reason'] ?? '',
+                            'item_description' => $item['item_description'] ?? '',
+                            'barcode' => $item['barcode'] ?? null,
+                            'is_product' => false,
+                        ]);
+                        $totalReturnAmount += $saleItem->price;
+                    }
                 }
             }
 

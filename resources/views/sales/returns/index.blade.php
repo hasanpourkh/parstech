@@ -1,50 +1,37 @@
-
-
 @extends('layouts.app')
 
 @section('content')
 <div class="container">
-    <h1 class="mb-4">لیست برگشت از فروش</h1>
-    <a class="btn btn-success mb-3" href="{{ route('sales.returns.create') }}">ثبت مرجوعی جدید</a>
+    <h2>لیست مرجوعی‌ها</h2>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-    <table class="table table-bordered">
-        <thead class="table-light">
+    <table class="table table-bordered mt-3">
+        <thead>
             <tr>
-                <th>#</th>
-                <th>شماره</th>
-                <th>ارجاع</th>
-                <th>شماره فاکتور فروش</th>
-                <th>مشتری</th>
-                <th>تاریخ</th>
-                <th>تاریخ سررسید</th>
-                <th>مبلغ کل</th>
+                <th>شماره مرجوعی</th>
+                <th>شماره فاکتور</th>
+                <th>کاربر</th>
+                <th>تاریخ ثبت</th>
                 <th>توضیحات</th>
-                <th>عملیات</th>
+                <th>مبلغ مرجوعی</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($returns as $return)
+        @forelse($returns as $return)
             <tr>
-                <td>{{ $loop->iteration }}</td>
-                <td>{{ $return->number }}</td>
-                <td>{{ $return->reference }}</td>
+                <td>{{ $return->return_number }}</td>
                 <td>{{ $return->sale ? $return->sale->id : '-' }}</td>
-                <td>{{ $return->customer ? $return->customer->name : ($return->sale && $return->sale->customer ? $return->sale->customer->name : '-') }}</td>
-                <td>{{ $return->date }}</td>
-                <td>{{ $return->due_date }}</td>
-                <td>{{ number_format($return->total_amount) }}</td>
+                <td>{{ $return->user ? $return->user->name : '-' }}</td>
+                <td>{{ \Morilog\Jalali\Jalalian::forge($return->created_at)->format('Y/m/d H:i') }}</td>
                 <td>{{ $return->note }}</td>
-                <td>
-                    <a href="{{ route('sales.returns.edit', $return) }}" class="btn btn-primary btn-sm">ویرایش</a>
-                    <form action="{{ route('sales.returns.destroy', $return) }}" method="POST" style="display:inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('حذف شود؟')">حذف</button>
-                    </form>
-                </td>
+                <td>{{ number_format($return->total_amount) }}</td>
             </tr>
-            @endforeach
+        @empty
+            <tr>
+                <td colspan="6">هیچ مرجوعی ثبت نشده است.</td>
+            </tr>
+        @endforelse
         </tbody>
     </table>
     {{ $returns->links() }}

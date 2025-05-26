@@ -7,24 +7,33 @@ use Illuminate\Database\Eloquent\Model;
 class SaleReturn extends Model
 {
     protected $fillable = [
-        'sale_id', 'return_number', 'return_date', 'user_id', 'note', 'total_amount'
+        'sale_id',
+        'user_id',
+        'return_number',
+        'return_date',
+        'note',
+        'total_amount',
     ];
-
-    public static function generateReturnNumber()
-    {
-        $prefix = 'RET-' . date('Ymd');
-        $last = static::where('return_number', 'like', $prefix . '%')->orderByDesc('id')->first();
-        $next = $last ? ((int)substr($last->return_number, strlen($prefix))) + 1 : 1;
-        return $prefix . sprintf('%03d', $next);
-    }
 
     public function sale()
     {
         return $this->belongsTo(Sale::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function items()
     {
-        return $this->hasMany(SaleReturnItem::class, 'sale_return_id');
+        return $this->hasMany(SaleReturnItem::class);
+    }
+
+    public static function generateReturnNumber()
+    {
+        $last = self::orderByDesc('id')->first();
+        $nextId = $last ? $last->id + 1 : 1;
+        return 'RET-' . $nextId . '-' . rand(1000, 9999);
     }
 }

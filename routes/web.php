@@ -163,9 +163,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return [
                 'id' => $sale->id,
                 'invoice_number' => $sale->invoice_number,
-                // ستون تاریخ را با ستون موجود در دیتابیس خود جایگزین کن (مثلاً created_at)
-                'date' => $sale->created_at, // اگر ستون دیگری داری نامش را جایگزین کن
-                'date_jalali' => jdate($sale->created_at)->format('Y/m/d'), // همینطور
+                'date' => $sale->created_at,
+                'date_jalali' => jdate($sale->created_at)->format('Y/m/d'),
                 'buyer_name' => $sale->buyer ? $sale->buyer->name : '-',
                 'seller_name' => $sale->seller ? $sale->seller->name : '-',
                 'total_amount' => $sale->total_amount,
@@ -173,9 +172,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     return [
                         'id' => $item->id,
                         'name' => $item->product ? $item->product->name : ($item->service ? $item->service->name : '-'),
-                        'qty' => $item->qty,
+                        'quantity' => $item->quantity, // تغییر از qty به quantity
                         'unit_price' => $item->unit_price,
-                        'total' => $item->qty * $item->unit_price,
+                        'total' => $item->quantity * $item->unit_price,
                     ];
                 }),
             ];

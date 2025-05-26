@@ -1,52 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // سوییچ شماره مرجوعی
-    const switchBtn = document.getElementById('custom-switch-btn');
-    const returnNumberInput = document.getElementById('return-number');
-    let isCustom = false;
-    switchBtn.addEventListener('click', function() {
-        isCustom = !isCustom;
-        if(isCustom) {
-            returnNumberInput.readOnly = false;
-            returnNumberInput.focus();
-            switchBtn.classList.add('active');
-            document.getElementById('switch-icon').classList.remove('bi-toggle-off');
-            document.getElementById('switch-icon').classList.add('bi-toggle-on');
-        } else {
-            returnNumberInput.readOnly = true;
-            returnNumberInput.value = window.lastSalesData.nextReturnNumber || returnNumberInput.getAttribute('data-default');
-            switchBtn.classList.remove('active');
-            document.getElementById('switch-icon').classList.remove('bi-toggle-on');
-            document.getElementById('switch-icon').classList.add('bi-toggle-off');
-        }
-    });
-
-    // ایجکس و فیلتر فاکتور فروش
-    const saleSelect = document.getElementById('sale-invoice-select');
-    const tableBox = document.getElementById('invoice-details-box');
-    const invTableBody = document.querySelector('#inv-products-table tbody');
-    const totalReturnAmount = document.getElementById('total-return-amount');
-
-    // فیلترها
-    document.getElementById('search-invoice-number').addEventListener('input', filterSalesList);
-    document.getElementById('search-buyer').addEventListener('input', filterSalesList);
-    document.getElementById('search-seller').addEventListener('input', filterSalesList);
-    document.getElementById('search-date').addEventListener('input', filterSalesList);
-
-    function filterSalesList() {
-        let invoice = document.getElementById('search-invoice-number').value.trim();
-        let buyer = document.getElementById('search-buyer').value.trim();
-        let seller = document.getElementById('search-seller').value.trim();
-        let date = document.getElementById('search-date').value.trim();
-        Array.from(saleSelect.options).forEach(function(opt, i) {
-            if(i === 0) return; // placeholder
-            let isShow = true;
-            if(invoice && !opt.text.includes(invoice)) isShow = false;
-            if(buyer && !opt.text.includes(buyer)) isShow = false;
-            if(seller && !opt.text.includes(seller)) isShow = false;
-            if(date && !opt.text.includes(date)) isShow = false;
-            opt.style.display = isShow ? '' : 'none';
-        });
-    }
+    let saleSelect = document.getElementById('sale_select');
+    let tableBox = document.getElementById('invoice-details-box');
+    let invTableBody = document.getElementById('invoice-items-tbody');
+    let totalReturnAmount = document.getElementById('totalReturnAmount');
 
     // انتخاب فاکتور، دریافت اطلاعات فروش از سرور (Ajax)
     saleSelect.addEventListener('change', function() {
@@ -74,11 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="fw-semibold">${item.name}</td>
-                <td>${item.qty}</td>
+                <td>${item.quantity}</td>
                 <td>${item.unit_price.toLocaleString()}</td>
                 <td>${item.total.toLocaleString()}</td>
                 <td>
-                    <input type="number" min="0" max="${item.qty}" value="0" class="form-control return-qty-input" name="items[${idx}][qty]">
+                    <input type="number" min="0" max="${item.quantity}" value="0" class="form-control return-qty-input" name="items[${idx}][qty]">
                     <input type="hidden" name="items[${idx}][id]" value="${item.id}">
                 </td>
                 <td>

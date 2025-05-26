@@ -6,14 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+    public function up()
     {
         Schema::create('sale_return_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sale_return_id');
             $table->unsignedBigInteger('product_id');
-            $table->integer('quantity'); // تعداد مرجوعی
-            $table->string('barcode')->nullable(); // بارکد مرجوعی
+            $table->integer('qty')->default(0);
+            $table->string('reason')->nullable();
+            $table->string('item_description')->nullable();
+            $table->string('barcode')->nullable();
+            $table->boolean('is_product')->default(false);
             $table->text('note')->nullable();
             $table->timestamps();
 
@@ -22,7 +25,7 @@ return new class extends Migration
         });
     }
 
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('sale_return_items');
     }

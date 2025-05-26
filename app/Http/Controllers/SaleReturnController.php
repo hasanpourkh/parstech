@@ -2,129 +2,118 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
 use App\Models\Product;
-use App\Models\Stock;
+use App\Models\Sale;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnItem;
+use App\Models\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SaleReturnController extends Controller
 {
+    // لیست مرجوعی‌ها
     public function index()
     {
-        $returns = SaleReturn::with(['sale', 'items.product'])->orderByDesc('created_at')->paginate(20);
+        $returns = SaleReturn::with(['sale', 'user'])
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
         return view('sales.returns.index', compact('returns'));
     }
 
+    // فرم ثبت مرجوعی جدید
     public function create()
     {
-        return view('sales.returns.create');
+        $sales = Sale::with('buyer', 'items.product')->latest()->limit(30)->get();
+        return view('sales.returns.create', compact('sales'));
     }
 
-    public function show($id)
-    {
-        $return = SaleReturn::with(['sale', 'items.product'])->findOrFail($id);
-        return view('sales.returns.show', compact('return'));
-    }
-
+    // ثبت مرجوعی
     public function store(Request $request)
     {
         $request->validate([
             'sale_id' => 'required|exists:sales,id',
             'items' => 'required|array|min:1',
+        ], [
+            'sale_id.required' => 'انتخاب فاکتور الزامی است.',
+            'items.required' => 'هیچ آیتمی برای مرجوعی انتخاب نشده است.',
         ]);
-
-        $items = $request->input('items');
-        $filteredItems = [];
-        foreach ($items as $id => $item) {
-            if (isset($item['selected']) && $item['selected']) {
-                $filteredItems[$id] = $item;
-            }
-        }
-        if (empty($filteredItems)) {
-            return back()->withErrors(['items' => 'هیچ آیتمی انتخاب نشده است.'])->withInput();
-        }
 
         DB::beginTransaction();
         try {
             $sale = Sale::with('items')->findOrFail($request->input('sale_id'));
+            $itemsData = $request->input('items', []);
+
             $totalReturnAmount = 0;
 
-            // محاسبه مبلغ مرجوعی و ثبت آیتم‌ها
-            $returnItems = [];
-            foreach ($filteredItems as $saleItemId => $item) {
+            $return = SaleReturn::create([
+                'sale_id' => $sale->id,
+                'user_id' => auth()->id(),
+                'return_number' => SaleReturn::generateReturnNumber(),
+                'return_date' => now(),
+                'note' => $request->input('note'),
+                'total_amount' => 0, // بعداً آپدیت می‌کنیم
+            ]);
+
+            foreach ($itemsData as $saleItemId => $item) {
+                if (empty($item['qty']) || intval($item['qty']) < 1) continue;
+
                 $saleItem = $sale->items()->where('id', $saleItemId)->first();
                 if (!$saleItem) continue;
 
                 $product = Product::find($saleItem->product_id);
-                $qty = min((int)($item['qty'] ?? 1), $saleItem->qty);
+                $returnQty = min(intval($item['qty']), $saleItem->quantity);
 
                 if ($product && $product->is_product) {
+                    // افزایش موجودی انبار
                     $stock = Stock::firstOrCreate(['product_id' => $product->id]);
-                    $stock->quantity += $qty;
+                    $stock->quantity += $returnQty;
                     $stock->save();
-                    $saleItem->qty -= $qty;
+
+                    // از تعداد آیتم فروش فقط به اندازه مرجوعی کم کن
+                    $saleItem->quantity -= $returnQty;
+                    if ($saleItem->quantity < 0) $saleItem->quantity = 0;
                     $saleItem->save();
-                    $returnItems[] = [
-                        'product_id'       => $product->id,
-                        'qty'              => $qty,
-                        'reason'           => $item['reason'] ?? '',
+
+                    // ثبت آیتم مرجوعی
+                    SaleReturnItem::create([
+                        'sale_return_id' => $return->id,
+                        'product_id' => $product->id,
+                        'qty' => $returnQty,
+                        'reason' => $item['reason'] ?? '',
                         'item_description' => $item['item_description'] ?? '',
-                        'barcode'          => $item['barcode'] ?? null,
-                        'is_product'       => true,
-                    ];
-                    $totalReturnAmount += $qty * $saleItem->price;
+                        'barcode' => $item['barcode'] ?? null,
+                        'is_product' => true,
+                    ]);
+                    $totalReturnAmount += $returnQty * $saleItem->price;
                 } else {
-                    $saleItem->qty = 0;
+                    // اگر سرویس است (is_product = false)
+                    $saleItem->quantity = 0;
                     $saleItem->save();
-                    $returnItems[] = [
-                        'product_id'       => $product->id,
-                        'qty'              => 1,
-                        'reason'           => $item['reason'] ?? '',
+
+                    SaleReturnItem::create([
+                        'sale_return_id' => $return->id,
+                        'product_id' => $product ? $product->id : null,
+                        'qty' => 1,
+                        'reason' => $item['reason'] ?? '',
                         'item_description' => $item['item_description'] ?? '',
-                        'barcode'          => $item['barcode'] ?? null,
-                        'is_product'       => false,
-                    ];
+                        'barcode' => $item['barcode'] ?? null,
+                        'is_product' => false,
+                    ]);
                     $totalReturnAmount += $saleItem->price;
                 }
             }
 
-            // ساخت مرجوعی
-            $return = SaleReturn::create([
-                'sale_id'       => $sale->id,
-                'return_number' => SaleReturn::generateReturnNumber(),
-                'return_date'   => now(),
-                'user_id'       => auth()->id(),
-                'note'          => $request->input('note'),
-                'total_amount'  => $totalReturnAmount,
-            ]);
+            // ثبت مبلغ مرجوعی
+            $return->total_amount = $totalReturnAmount;
+            $return->save();
 
-            // ثبت آیتم‌های مرجوعی
-            foreach ($returnItems as $item) {
-                $item['sale_return_id'] = $return->id;
-                SaleReturnItem::create($item);
-            }
-
-            // بروزرسانی مبلغ کل فاکتور اصلی
-            $sale->final_amount -= $totalReturnAmount;
-            if ($sale->final_amount < 0) $sale->final_amount = 0;
-            $sale->save();
-
-            // ساخت فاکتور جدید ویرایش‌شده در صورت وجود آیتم باقی‌مانده
-            $remainingItems = $sale->items()->where('qty', '>', 0)->get();
-            if ($remainingItems->count() > 0) {
-                $newSale = $sale->replicate();
-                $newSale->invoice_number = $sale->invoice_number . '-R';
-                $newSale->tag = 'ویرایش‌شده-مرجوعی';
-                $newSale->final_amount = $remainingItems->sum(function ($i) { return $i->qty * $i->price; });
-                $newSale->save();
-                foreach ($remainingItems as $item) {
-                    $newItem = $item->replicate();
-                    $newItem->sale_id = $newSale->id;
-                    $newItem->save();
-                }
+            // کاهش مبلغ مرجوعی از مبلغ نهایی فاکتور
+            if ($totalReturnAmount > 0) {
+                $sale->final_amount -= $totalReturnAmount;
+                if ($sale->final_amount < 0) $sale->final_amount = 0;
+                $sale->save();
             }
 
             DB::commit();

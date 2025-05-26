@@ -289,12 +289,12 @@
                     </select>
                 </div>
 
-                <!-- فرم‌های هر روش پرداخت -->
                 @include('sales.partials.payment-forms', ['sale' => $sale])
+
                 <!-- فرم اقساطی -->
                 <div id="installmentPaymentForm" class="payment-form {{ old('payment_method', $sale->payment_method)=='installment'?'':'d-none' }}">
                     <div class="alert alert-info mb-3">
-                        <i class="fas fa-info-circle"></i> اطلاعات زیر برای ثبت اقساط قابل ویرایش و افزودن است.
+                        <i class="fas fa-info-circle"></i> مبلغ کل، تعداد اقساط و درصد سود ماهانه را وارد کنید و روی "تولید اقساط" بزنید. مبلغ هر قسط با فرمول بانکی محاسبه می‌شود.
                     </div>
                     <div class="form-group mb-3">
                         <label class="form-label">نوع اقساط</label>
@@ -304,12 +304,16 @@
                         </select>
                     </div>
                     <div class="form-group mb-3">
+                        <label class="form-label">مبلغ کل (تومان)</label>
+                        <input type="number" min="1" name="installment_total" id="installmentTotalInput" class="form-control" value="{{ old('installment_total', $remaining_amount) }}">
+                    </div>
+                    <div class="form-group mb-3">
                         <label class="form-label">تعداد اقساط</label>
                         <input type="number" min="1" name="installment_count" id="installmentCountInput" class="form-control" value="{{ old('installment_count', 3) }}">
                     </div>
                     <div class="form-group mb-3">
-                        <label class="form-label">مبلغ هر قسط (تومان)</label>
-                        <input type="number" min="1" name="installment_amount" id="installmentAmountInput" class="form-control" value="{{ old('installment_amount', ceil($remaining_amount / max(1, old('installment_count',3)))) }}">
+                        <label class="form-label">درصد سود ماهانه <span class="text-muted">(مثلاً 2 برای 2%)</span></label>
+                        <input type="number" min="0" max="100" name="installment_interest" id="installmentInterestInput" class="form-control" value="{{ old('installment_interest', 2) }}">
                     </div>
                     <div class="form-group mb-3">
                         <label class="form-label">تاریخ شروع اقساط</label>
@@ -506,16 +510,32 @@
     document.getElementById('paymentMethodSelect').addEventListener('change', togglePaymentForms);
     window.addEventListener('DOMContentLoaded', togglePaymentForms);
 
+    // محاسبه مبلغ هر قسط با فرمول بانکی (قسط مساوی با سود ماهانه)
+    function calculateInstallmentAmount(total, count, interestPercent) {
+        let n = parseInt(count);
+        let P = parseInt(total);
+        let r = parseFloat(interestPercent) / 100; // نرخ سود ماهانه
+        if (n <= 0 || P <= 0) return 0;
+
+        if(r === 0) {
+            return Math.round(P / n);
+        }
+        let A = P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+        return Math.round(A);
+    }
+
     // تولید اقساط داینامیک
     function generateInstallmentsTable() {
         let count = parseInt(document.getElementById('installmentCountInput').value) || 1;
-        let amount = parseInt(document.getElementById('installmentAmountInput').value) || 0;
+        let total = parseInt(document.getElementById('installmentTotalInput').value) || 0;
+        let interest = parseFloat(document.getElementById('installmentInterestInput').value) || 0;
         let startDate = document.getElementById('installmentStartDate').value;
         let type = document.getElementById('installmentTypeSelect').value;
         if (!startDate) {
             alert("لطفا تاریخ شروع اقساط را وارد کنید");
             return;
         }
+        let perAmount = calculateInstallmentAmount(total, count, interest);
         let table = `<table class="table table-bordered installment-table"><thead>
             <tr>
                 <th>شماره قسط</th>
@@ -534,7 +554,7 @@
             table += `<tr>
                 <td>${i}</td>
                 <td><input type="date" name="installments[${i}][due_date]" value="${dueDateStr}" class="form-control"></td>
-                <td><input type="number" name="installments[${i}][amount]" value="${amount}" class="form-control"></td>
+                <td><input type="number" name="installments[${i}][amount]" value="${perAmount}" class="form-control"></td>
                 <td>
                     <select name="installments[${i}][status]" class="form-select">
                         <option value="pending">در انتظار پرداخت</option>

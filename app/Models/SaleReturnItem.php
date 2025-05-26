@@ -7,7 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class SaleReturnItem extends Model
 {
     protected $fillable = [
-        'sale_return_id', 'product_id', 'qty', 'reason', 'item_description', 'barcode', 'is_product'
+        'sale_return_id',
+        'product_id',
+        'qty',
+        'reason',
+        'item_description',
+        'barcode',
+        'is_product'
     ];
 
     public function saleReturn()

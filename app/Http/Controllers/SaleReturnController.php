@@ -55,6 +55,7 @@ class SaleReturnController extends Controller
                 'note'          => $request->input('note'),
                 'user_id'       => auth()->id(),
                 'return_number' => SaleReturn::generateReturnNumber(),
+                'return_date'   => now(),
             ]);
             $totalReturnAmount = 0;
 

@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Shop;
-
+use App\Models\Province;
 class SettingsController extends Controller
 {
     public function company()
     {
         $shop = Shop::first();
-        return view('settings.company', compact('shop'));
+        $provinces = Province::orderBy('name')->get();
+        return view('settings.company', compact('shop', 'provinces'));
     }
 
     public function updateCompany(Request $request)

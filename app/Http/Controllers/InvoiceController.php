@@ -15,6 +15,16 @@ use Morilog\Jalali\Jalalian;
 
 class InvoiceController extends Controller
 {
+
+    public function index()
+    {
+        $invoices = Invoice::with(['customer', 'seller', 'currency'])
+            ->orderBy('date', 'desc')
+            ->paginate(15);
+
+        return view('invoices.index', compact('invoices'));
+    }
+    
     // فرم ایجاد فاکتور جدید
     public function newForm()
     {

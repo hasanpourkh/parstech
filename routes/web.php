@@ -118,6 +118,11 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+
+
     Route::get('/api/sales-data/{period}', [DashboardController::class, 'getSalesData']);
 
     // Profile

@@ -36,6 +36,7 @@
                             <th>تاریخ صدور</th>
                             <th>تاریخ سررسید</th>
                             <th>جمع کل (ریال)</th>
+                            <th>سود</th>
                             <th>وضعیت</th>
                             <th>عملیات</th>
                         </tr>
@@ -54,6 +55,7 @@
                             <td>{{ jdate($invoice->date)->format('Y/m/d') }}</td>
                             <td>{{ jdate($invoice->due_date)->format('Y/m/d') }}</td>
                             <td>{{ number_format($invoice->total_amount) }}</td>
+                            <td>{{ number_format($invoice->profit) }}</td>
                             <td>
                                 @if($invoice->status == 'paid')
                                     <span class="badge bg-success">پرداخت شده</span>

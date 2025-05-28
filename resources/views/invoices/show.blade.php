@@ -98,6 +98,8 @@
                 </div>
                 <div class="col-md-4 text-end">
                     <h5>جمع کل: <span class="fw-bold">{{ number_format($invoice->total_amount) }} ریال</span></h5>
+                    <p><strong>سود:</strong> {{ number_format($invoice->profit) }} ریال</p>
+
                 </div>
             </div>
 

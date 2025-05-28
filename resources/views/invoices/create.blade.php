@@ -29,7 +29,7 @@
         </div>
         <div class="col-md-4">
             <label>شماره فاکتور</label>
-            <input type="text" name="invoice_number" class="form-control" value="{{ old('invoice_number') }}" required>
+            <input type="text" name="invoice_number" id="invoice_number" class="form-control" required readonly>
         </div>
     </div>
     <div class="row mb-2">
@@ -84,15 +84,15 @@
     <div class="row mb-2">
         <div class="col-md-3">
             <label>درصد تخفیف</label>
-            <input type="number" name="discount_percent" class="form-control" value="0">
+            <input type="number" name="discount_percent" id="discount_percent" class="form-control" value="0">
         </div>
         <div class="col-md-3">
             <label>مبلغ تخفیف</label>
-            <input type="number" name="discount_amount" class="form-control" value="0">
+            <input type="number" name="discount_amount" id="discount_amount" class="form-control" value="0">
         </div>
         <div class="col-md-3">
             <label>درصد مالیات</label>
-            <input type="number" name="tax_percent" class="form-control" value="0">
+            <input type="number" name="tax_percent" id="tax_percent" class="form-control" value="0">
         </div>
     </div>
     <div class="mb-2">
@@ -106,88 +106,5 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-<script src="/js/currency-management.js"></script>
-<script>
-$(function() {
-    // Select2 مشتری
-    $('#customer_select').select2({
-        ajax: {
-            url: '/api/persons/search?type=customer',
-            dataType: 'json',
-            processResults: data => ({ results: data }),
-            delay: 250
-        },
-        placeholder: 'جستجوی مشتری...'
-    });
-    // Select2 فروشنده
-    $('#seller_select').select2({
-        ajax: {
-            url: '/sellers/list',
-            dataType: 'json',
-            processResults: data => ({ results: data }),
-            delay: 250
-        },
-        placeholder: 'جستجوی فروشنده...'
-    });
-    $('.select2').select2({dir: 'rtl'});
-    $('.datepicker').persianDatepicker({ format: 'YYYY/MM/DD', autoClose: true });
-
-    // محصولات انتخاب شده
-    let products = [];
-    // جستجوی محصول (نمونه ساده AJAX)
-    $('#product_search').on('keyup', function () {
-        let q = $(this).val();
-        if (q.length < 2) { $('#product_suggestions').hide(); return; }
-        $.getJSON('/api/products/search', {q}, function(data){
-            let html = '';
-            data.forEach(item => {
-                html += `<div class="product-suggestion" data-id="${item.id}" data-name="${item.name}" data-price="${item.sell_price}">${item.name} (${item.code})</div>`;
-            });
-            $('#product_suggestions').html(html).show();
-        });
-    });
-    // انتخاب محصول از لیست
-    $(document).on('click', '.product-suggestion', function () {
-        $('#product_search').val($(this).data('name'));
-        $('#product_price').val($(this).data('price'));
-        $('#product_suggestions').hide();
-        $('#product_search').data('id', $(this).data('id'));
-    });
-    // افزودن محصول به جدول
-    $('#add_product').on('click', function () {
-        let id = $('#product_search').data('id');
-        let name = $('#product_search').val();
-        let qty = parseInt($('#product_qty').val());
-        let price = parseFloat($('#product_price').val());
-        if (id && qty > 0 && price > 0) {
-            products.push({product_id:id, name, quantity:qty, unit_price:price, total:qty*price});
-            renderProducts();
-            $('#product_search').val('').removeData('id');
-            $('#product_qty').val('');
-            $('#product_price').val('');
-        }
-    });
-    // حذف ردیف
-    $(document).on('click', '.remove-product', function(){
-        let index = $(this).data('index');
-        products.splice(index,1);
-        renderProducts();
-    });
-    function renderProducts() {
-        let html = '';
-        products.forEach((item,i) => {
-            html += `<tr>
-                <td>${item.product_id}</td>
-                <td>${item.name}</td>
-                <td>${item.quantity}</td>
-                <td>${item.unit_price}</td>
-                <td>${item.total}</td>
-                <td><button type="button" class="btn btn-danger btn-sm remove-product" data-index="${i}">حذف</button></td>
-            </tr>`;
-        });
-        $('#products_table tbody').html(html);
-        $('#products_input').val(JSON.stringify(products));
-    }
-});
-</script>
+<script src="/js/invoice-create.js"></script>
 @endpush
